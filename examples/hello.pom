@@ -1,0 +1,10 @@
+import stdio;
+
+fn main() -> int
+{
+    let msg : str = "Hello, World!\n";
+
+    stdio.printf(msg);
+
+    return 0;
+}
