@@ -57,3 +57,8 @@ class(opcode_s)
 
 extern const opcode_s ops[];
 extern const uint16_t num_ops;
+
+#define i_BX 11
+#define i_BP 13
+#define i_SI 14
+#define i_DI 15

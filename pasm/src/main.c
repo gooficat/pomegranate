@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     // }
 
     for (size_t i = 0; i != encoded.bytes.len; ++i)
-        printf("0x%02hhx\t", encoded.bytes.data[i]);
+        printf("%02hhx\t", encoded.bytes.data[i]);
 
     printf("finished\n");
     return 0;

@@ -1,6 +1,6 @@
 
 main:
-    add %ax, %cx
+    add %ax, [%bx+%si+32]
     jmp $main
 
 ; a file may not end without a newline or comment

@@ -40,7 +40,6 @@ asm_arg parse_reg_arg(token tk)
         {
             out.value = i;
             out.type = ARG_REG;
-            printf("reg\n");
             return out;
         }
 
@@ -57,7 +56,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         ++i;
         out.value = parse_number(tokens.data[i]);
 
-        out.type = ARG_IMM;
+        out.type = ARG_MEM;
 
         ++i;
         // todo: check for operator
@@ -71,7 +70,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
             out.references_label = true;
         }
 
-        out.type = ARG_MEM;
+        out.type = ARG_IMM;
 
         ++i;
     }

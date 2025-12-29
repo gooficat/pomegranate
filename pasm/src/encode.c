@@ -38,7 +38,7 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
                     loff = arg.value;
                 if (spec.size == BYT)
                 {
-                    if (unit.bytes.len + 3 - loff > 0xFF)
+                    if (unit.bytes.len - 3 - loff > 0xFF)
                         return false;
                     return true;
                 }
@@ -106,15 +106,6 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         asm_arg_spec spec = op.spec[i];
         switch (spec.type)
         {
-        case EFF:
-            if (!arg.indirection)
-            {
-                has_modrm = true;
-                modrm |= regs[arg.value].opcode;
-                modrm |= (0b11 << 6);
-                printf("added modrm\n");
-            }
-            break;
         case GEN:
             has_modrm = true;
             modrm |= regs[arg.value].opcode << 3;
@@ -128,12 +119,81 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 v = arg.value;
             disp[displ++] = v & 0xFF;
             if (spec.size != BYT)
-                disp[displ++] = (v << 8) & 0xFF;
+                disp[displ++] = (v >> 8) & 0xFF;
         }
         break;
+        case EFF:
+            has_modrm = true;
+            if (!arg.indirection)
+            {
+                modrm |= regs[arg.value].opcode;
+                modrm |= (0b11 << 6);
+                printf("added modrm\n");
+            }
+            else
+            {
+                uint8_t base = 0;
+                uint8_t index = 0;
+                uint16_t displacement = 0;
+
+                if (arg.type == ARG_REG && (arg.value == i_BP || arg.value == i_BX))
+                {
+                    base = arg.value;
+                    arg = *arg.application;
+                    printf("base\n");
+                }
+                if (arg.type == ARG_REG)
+                {
+                    index = arg.value;
+                    arg = *arg.application;
+                    printf("index\n");
+                }
+                if (arg.type == ARG_IMM)
+                {
+                    if (arg.references_label)
+                    {
+                        displacement = unit->labels.data[arg.value].offset;
+                        printf("index label\n");
+                    }
+                    else
+                    {
+                        displacement = arg.value;
+                        printf("imm\n");
+                    }
+                }
+                if (!base)
+                {
+                    modrm |= index == i_SI ? 0b100 : 0b101;
+                }
+                else if (base == i_BP)
+                    modrm |= 0b10;
+
+                if (!index)
+                {
+                    modrm |= base != i_BX ? 0b110 : 0b111;
+                }
+                if (index == i_DI)
+                    modrm |= 0b1;
+
+                uint8_t mod = 0;
+                if (displacement)
+                {
+                    disp[displ++] = displacement & 0xFF;
+                    ++mod;
+                }
+                if (displacement > 0xFF)
+                {
+                    disp[displ++] = (displacement >> 8) & 0xFF;
+                    ++mod;
+                }
+                modrm |= (mod << 6);
+
+                printf("modrm is %hhx disp is %hu mod is %hhx\n", modrm, displacement, mod);
+            }
+            break;
         case REL: {
             uint16_t v;
-            int16_t o;
+            uint16_t o;
             if (arg.references_label)
             {
                 v = unit->labels.data[arg.value].offset;
@@ -141,13 +201,13 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             else
                 v = arg.value;
             if (spec.size != BYT)
-                o = v - unit->bytes.len + 3;
+                o = 0 - v - unit->bytes.len - 3;
             else
-                o = (uint8_t)(v - unit->bytes.len + 2);
+                o = (uint8_t)(0 - v - unit->bytes.len - 2);
 
             disp[displ++] = o & 0xFF;
             if (spec.size != BYT)
-                disp[displ++] = (o << 8) & 0xFF;
+                disp[displ++] = (o >> 8) & 0xFF;
         }
         break;
         default:
