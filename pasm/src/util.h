@@ -67,3 +67,5 @@ class(str_view)
     })
 
 #define make_vec(t) (vector_##t){.data = malloc(sizeof(t)), .len = 0, .cap = 1}
+
+#define BIT(n) (1 << (n))

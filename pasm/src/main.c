@@ -3,6 +3,35 @@
 #include <assert.h>
 #include <stdio.h>
 
+void print_arg(asm_arg arg)
+{
+    printf("\t");
+    if (arg.indirection)
+        printf("indirect");
+    else
+        printf("arg");
+    printf("%hu ", arg.value);
+
+    if (arg.operation)
+    {
+        printf(" %c", arg.operation);
+        print_arg(*arg.application);
+    }
+    printf("\n");
+}
+
+void print_instr(asm_ins ins)
+{
+    printf("instruc '%.*s'\n", ins.name.len, ins.name.ptr);
+    for (uint8_t j = 0; j != 2; ++j)
+    {
+        if (ins.args[j].type)
+        {
+            print_arg(ins.args[j]);
+        }
+    }
+}
+
 int main(int argc, char *argv[])
 {
     assert(argc == 2 && "Error: Wrong argument count");
@@ -24,17 +53,7 @@ int main(int argc, char *argv[])
         if (tree.lines.data[i].type == LINE_INSTR)
         {
             asm_ins ins = *(asm_ins *)(tree.lines.data[i].ptr);
-            printf("instruc '%.*s'\n", ins.name.len, ins.name.ptr);
-            for (uint8_t j = 0; j != 2; ++j)
-            {
-                if (ins.args[j].type)
-                {
-                    if (ins.args[j].indirection)
-                        printf("\tindirect arg\n");
-                    else
-                        printf("\targ\n");
-                }
-            }
+            print_instr(ins);
         }
         else if (tree.lines.data[i].type == LINE_LABEL)
         {

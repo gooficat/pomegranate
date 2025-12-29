@@ -1,2 +1,2 @@
 main:
-    movq %ax, [%cx]
+    movq %ax, [%cx + $67 + $32]

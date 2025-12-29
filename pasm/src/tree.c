@@ -105,10 +105,12 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
     {
         out.type = NO_ARG;
     }
-    uint8_t next_indir = out.indirection;
     while (i < tokens.len && tokens.data[i].ptr[0] == ']')
     {
-        --next_indir;
+        // some operands might redirect before the end. some might not. for example, on 6502 we have
+        // lda ($LL,X), or in our syntax, something like lda [[$LL, X]]. as you see, it has
+        // indirection on the first operand and none on the second
+        ++out.redirection;
         ++i;
     }
     if (i < tokens.len && tokens.data[i].len == 1 && tokens.data[i].ptr[0] != '.' && tokens.data[i].ptr[0] != ',')
@@ -116,9 +118,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         out.operation = tokens.data[i].ptr[0];
         ++i;
         out.application = new(asm_arg, parse_arg(tokens, &i));
-        out.application->indirection += next_indir;
     }
-    // todo: operator parsing
 
     *index = i;
     return out;

@@ -5,20 +5,43 @@
 enum(asm_arg_type,
     {
         NO_ARG = 0,
-        ARG_R8 = 1 << 0,
-        ARG_R16 = 1 << 1,
+        ARG_R8,
+        ARG_R16,
 
-        ARG_M8 = 1 << 2,
-        ARG_M16 = 1 << 3,
+        ARG_M8,
+        ARG_M16,
 
-        ARG_REL8 = 1 << 4,
-        ARG_REL16 = 1 << 5,
+        ARG_REL8,
+        ARG_REL16,
 
-        ARG_SEG = 1 << 6,
-        ARG_FAR = 1 << 7,
+        ARG_SEG,
+        ARG_FAR,
 
-        ARG_IMM8 = 1 << 8,
-        ARG_IMM16 = 1 << 9,
+        ARG_IMM8,
+        ARG_IMM16,
+    });
+
+enum(asm_enc_type,
+    {
+        NOENC = 0,
+        ABS,
+        EFF,
+        GEN,
+        IMM,
+        REL,
+        MEM,
+        OFF,
+        SEG,
+    });
+
+enum(asm_enc_size,
+    {
+        NOSIZ = 0,
+        BYT,
+        WOR,
+        DEF,
+        POI,
+        VRI,
     });
 
 struct

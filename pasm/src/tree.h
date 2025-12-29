@@ -12,7 +12,7 @@ class(asm_arg)
     uint16_t value;
     char operation;
     asm_arg *application;
-
+    uint8_t redirection;
     bool references_label;
 };
 

@@ -28,3 +28,12 @@ const reg_s seg_regs[] = {
     {"es", 0},
 };
 const uint8_t num_seg_regs = sizeof(seg_regs) / sizeof(reg_s);
+
+const opcode_s ops[] = {
+    {
+        "add",
+        0x00,
+        {},
+    },
+};
+const uint16_t num_ops = sizeof(ops) / sizeof(opcode_s);
