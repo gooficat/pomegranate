@@ -1,3 +1,4 @@
+#include "encode.h"
 #include "parse.h"
 #include "tree.h"
 #include <assert.h>
@@ -51,6 +52,9 @@ int main(int argc, char *argv[])
         {
             asm_ins ins = *(asm_ins *)(tree.lines.data[i].ptr);
             print_instr(ins);
+
+            opcode_s op = find_opcode(ins);
+            printf("instruc %.*s matches opcode %hhu\n", ins.name.len, ins.name.ptr, op.opcode);
         }
         else if (tree.lines.data[i].type == LINE_LABEL)
         {
