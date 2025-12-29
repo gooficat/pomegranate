@@ -1,3 +1,10 @@
+
+main:
+    add %ax, [0x00]
+
+; a file may not end without a newline or comment
+
+
 ; this is an assembly syntax by gooficat
 ; it is derived from at & t assembly
 ; a label is an alphanumerical followed by a colon
@@ -12,8 +19,3 @@
 ; "lda [%x, $6741]"
 ; hexadecimal and binary are supported too, without
 ; 0x and 0b prefixes
-main:
-    mov %ax, [%cx + 67 + 32]
-    int 0x10
-
-; a file may not end without a newline or comment

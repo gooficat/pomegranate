@@ -5,6 +5,16 @@
 #include "util.h"
 #include <stdbool.h>
 
+enum(asm_arg_type,
+    {
+        NO_ARG = 0,
+        ARG_REG,
+
+        ARG_MEM,
+
+        ARG_IMM,
+    });
+
 class(asm_arg)
 {
     asm_arg_type type;

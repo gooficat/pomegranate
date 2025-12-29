@@ -35,20 +35,12 @@ uint16_t parse_number(token tk)
 asm_arg parse_reg_arg(token tk)
 {
     asm_arg out = {0};
-    for (uint8_t i = 0; i < num_regs8; ++i)
-        if (strlen(regs8[i].name) == tk.len && !memcmp(tk.ptr, regs8[i].name, tk.len))
+    for (uint8_t i = 0; i < num_regs; ++i)
+        if (strlen(regs[i].name) == tk.len && !memcmp(tk.ptr, regs[i].name, tk.len))
         {
             out.value = i;
-            out.type = ARG_R8;
-            printf("r8\n");
-            return out;
-        }
-    for (uint8_t i = 0; i < num_regs16; ++i)
-        if (strlen(regs16[i].name) == tk.len && !memcmp(tk.ptr, regs16[i].name, tk.len))
-        {
-            out.value = i;
-            out.type = ARG_R16;
-            printf("r16\n");
+            out.type = ARG_REG;
+            printf("reg\n");
             return out;
         }
 
@@ -65,10 +57,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         ++i;
         out.value = parse_number(tokens.data[i]);
 
-        if (out.value > 0xFF)
-            out.type = ARG_IMM16;
-        else
-            out.type = ARG_IMM8;
+        out.type = ARG_IMM;
 
         ++i;
         // todo: check for operator
@@ -82,10 +71,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
             out.references_label = true;
         }
 
-        if (out.value > 0xFF)
-            out.type = ARG_M16;
-        else
-            out.type = ARG_M8;
+        out.type = ARG_MEM;
 
         ++i;
     }
