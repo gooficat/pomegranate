@@ -1,6 +1,7 @@
 
 main:
     add %ax, %cx
+    jmp 0x00
 
 ; a file may not end without a newline or comment
 

@@ -46,24 +46,23 @@ int main(int argc, char *argv[])
     printf("\n");
     asm_tree tree = make_tree(block.toks);
 
-    for (size_t i = 0; i < tree.lines.len; ++i)
-    {
-        if (tree.lines.data[i].type == LINE_INSTR)
-        {
-            asm_ins ins = *(asm_ins *)(tree.lines.data[i].ptr);
-            print_instr(ins);
-
-            opcode_s op = find_opcode(ins);
-            printf("instruc %.*s matches opcode %hhu\n", ins.name.len, ins.name.ptr, op.opcode);
-        }
-        else if (tree.lines.data[i].type == LINE_LABEL)
-        {
-            asm_lab lab = tree.labs.data[*(asm_lab_key *)(tree.lines.data[i].ptr)];
-            printf("label '%.*s'\n", lab.name.len, lab.name.ptr);
-        }
-    }
-
     asm_encode_unit encoded = encode_tree(tree);
+    // for (size_t i = 0; i < tree.lines.len; ++i)
+    // {
+    //     if (tree.lines.data[i].type == LINE_INSTR)
+    //     {
+    //         asm_ins ins = *(asm_ins *)(tree.lines.data[i].ptr);
+    //         print_instr(ins);
+
+    //         opcode_s op = find_opcode(ins, encoded);
+    //         printf("instruc %.*s matches opcode %hhu\n", ins.name.len, ins.name.ptr, op.opcode);
+    //     }
+    //     else if (tree.lines.data[i].type == LINE_LABEL)
+    //     {
+    //         asm_lab lab = tree.labs.data[*(asm_lab_key *)(tree.lines.data[i].ptr)];
+    //         printf("label '%.*s'\n", lab.name.len, lab.name.ptr);
+    //     }
+    // }
 
     for (size_t i = 0; i != encoded.bytes.len; ++i)
         printf("0x%02hhx\t", encoded.bytes.data[i]);

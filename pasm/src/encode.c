@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-bool match_arg(asm_arg arg, asm_arg_spec spec)
+bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
 {
     if (arg.indirection)
     {
@@ -29,6 +29,24 @@ bool match_arg(asm_arg arg, asm_arg_spec spec)
         case ARG_MEM:
             if (spec.type == ABS)
                 return true;
+            if (spec.type == REL)
+            {
+                uint16_t loff;
+                if (arg.references_label)
+                    loff = unit.labels.data[arg.value].offset;
+                else
+                    loff = arg.value;
+                if (spec.size == BYT)
+                {
+                    if (unit.bytes.len + 3 - loff > 0xFF)
+                        return false;
+                    return true;
+                }
+                else
+                {
+                    return true;
+                }
+            }
             return false;
 
         case ARG_REG: {
@@ -52,19 +70,19 @@ bool match_arg(asm_arg arg, asm_arg_spec spec)
         }
 }
 
-bool match_spec(asm_ins ins, opcode_s prof)
+bool match_spec(asm_ins ins, opcode_s prof, asm_encode_unit unit)
 {
     uint8_t len = strlen(prof.name);
     if (len != ins.name.len || memcmp(ins.name.ptr, prof.name, strlen(prof.name)))
         return false;
 
-    return match_arg(ins.args[0], prof.spec[0]) && match_arg(ins.args[1], prof.spec[1]);
+    return match_arg(ins.args[0], prof.spec[0], unit) && match_arg(ins.args[1], prof.spec[1], unit);
 }
 
-opcode_s find_opcode(asm_ins ins)
+opcode_s find_opcode(asm_ins ins, asm_encode_unit unit)
 {
     for (size_t i = 0; i != num_ops; ++i)
-        if (match_spec(ins, ops[i]))
+        if (match_spec(ins, ops[i], unit))
             return ops[i];
 
     return (opcode_s){0};
@@ -73,7 +91,7 @@ opcode_s find_opcode(asm_ins ins)
 void encode_ins(asm_encode_unit *unit, size_t i)
 {
     asm_ins ins = *(asm_ins *)unit->tree.lines.data[i].ptr;
-    opcode_s op = find_opcode(ins);
+    opcode_s op = find_opcode(ins, *unit);
     uint8_t opcode = op.opcode;
     uint8_t modrm = 0;
     bool has_modrm = false;
@@ -113,7 +131,25 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 disp[displ++] = (v << 8) & 0xFF;
         }
         break;
+        case REL: {
+            uint16_t v;
+            int16_t o;
+            if (arg.references_label)
+            {
+                v = unit->labels.data[arg.value].offset;
+            }
+            else
+                v = arg.value;
+            if (spec.size != BYT)
+                o = v - unit->bytes.len + 3;
+            else
+                o = (uint8_t)(v - unit->bytes.len + 2);
 
+            disp[displ++] = o & 0xFF;
+            if (spec.size != BYT)
+                disp[displ++] = (o << 8) & 0xFF;
+        }
+        break;
         default:
             break;
         }
@@ -124,14 +160,10 @@ void encode_ins(asm_encode_unit *unit, size_t i)
 
     push(unit->bytes, opcode);
     if (has_modrm)
-    {
         push(unit->bytes, modrm);
-    }
 
     for (uint8_t i = 0; i != displ; ++i)
-    {
         push(unit->bytes, disp[i]);
-    }
 }
 
 void encode_unit(asm_encode_unit *unit)

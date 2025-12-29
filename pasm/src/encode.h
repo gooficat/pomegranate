@@ -13,7 +13,7 @@ class(asm_encode_unit)
     bool requires_repass;
 };
 
-opcode_s find_opcode(asm_ins ins);
+opcode_s find_opcode(asm_ins ins, asm_encode_unit unit);
 
 asm_encode_unit encode_tree(asm_tree tree);
 
