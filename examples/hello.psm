@@ -1,7 +1,7 @@
 
 main:
     add %ax, %cx
-    jmp 0x00
+    jmp $main
 
 ; a file may not end without a newline or comment
 
@@ -20,3 +20,5 @@ main:
 ; "lda [%x, $6741]"
 ; hexadecimal and binary are supported too, without
 ; 0x and 0b prefixes
+
+; it's worth noting, although it is implied above, that an address shall be used (for jumps and calls) by using the memory prefix
