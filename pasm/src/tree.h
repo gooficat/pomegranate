@@ -61,11 +61,14 @@ class(asm_line)
     pvoid ptr;
 };
 
+typedef uint16_t asm_lab_key;
+
 vec_type(asm_line);
 
 class(asm_tree)
 {
     vector_asm_line lines;
+    vector_asm_lab labs;
 };
 
 asm_tree make_tree(vector_token tokens);

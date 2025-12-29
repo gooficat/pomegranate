@@ -1,6 +1,6 @@
 
 main:
-    add %ax, [0x00]
+    add %ax, %cx
 
 ; a file may not end without a newline or comment
 

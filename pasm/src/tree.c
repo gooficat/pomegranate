@@ -169,12 +169,14 @@ asm_tree make_tree(vector_token tokens)
         }
         else if (tokens.data[i + 1].ptr[0] == ':')
         {
-            line.type = LINE_LABEL;
-            line.ptr = new(asm_lab,
-                {
-                    .name = tk,
+            push(tree.labs,
+                (asm_lab){
+                    .name = tokens.data[i],
+                    .offset = 0,
                 } //
             );
+            line.type = LINE_LABEL;
+            line.ptr = new(asm_lab_key, tree.labs.len - 1);
             i += 2;
         }
         else

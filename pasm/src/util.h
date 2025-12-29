@@ -33,18 +33,22 @@ class(str_view)
     };
 
 #define push(vec, ...)                                                                                                 \
-    if (++vec.len > vec.cap)                                                                                           \
     {                                                                                                                  \
-        vec.cap *= 2;                                                                                                  \
-        vec.data = realloc(vec.data, vec.cap * sizeof(vec.data[0]));                                                   \
-    }                                                                                                                  \
-    vec.data[vec.len - 1] = __VA_ARGS__;
+        if (++vec.len > vec.cap)                                                                                       \
+        {                                                                                                              \
+            vec.cap *= 2;                                                                                              \
+            vec.data = realloc(vec.data, vec.cap * sizeof(vec.data[0]));                                               \
+        }                                                                                                              \
+        vec.data[vec.len - 1] = __VA_ARGS__;                                                                           \
+    }
 
 #define pop(vec)                                                                                                       \
-    if (--vec.len > vec.cap / 2)                                                                                       \
     {                                                                                                                  \
-        vec.cap /= 2;                                                                                                  \
-        vec.data = realloc(vec.data, vec.cap * sizeof(vec.data[0]));                                                   \
+        if (--vec.len > vec.cap / 2)                                                                                   \
+        {                                                                                                              \
+            vec.cap /= 2;                                                                                              \
+            vec.data = realloc(vec.data, vec.cap * sizeof(vec.data[0]));                                               \
+        }                                                                                                              \
     }
 
 #define new(t, ...)                                                                                                    \

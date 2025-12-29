@@ -58,10 +58,15 @@ int main(int argc, char *argv[])
         }
         else if (tree.lines.data[i].type == LINE_LABEL)
         {
-            asm_lab lab = *(asm_lab *)(tree.lines.data[i].ptr);
+            asm_lab lab = tree.labs.data[*(asm_lab_key *)(tree.lines.data[i].ptr)];
             printf("label '%.*s'\n", lab.name.len, lab.name.ptr);
         }
     }
+
+    asm_encode_unit encoded = encode_tree(tree);
+
+    for (size_t i = 0; i != encoded.bytes.len; ++i)
+        printf("0x%02hhx\t", encoded.bytes.data[i]);
 
     printf("finished\n");
     return 0;
