@@ -136,17 +136,30 @@ asm_ins *parse_instruction(vector_token tokens, size_t *index)
     return out;
 }
 
+const char *asm_direc_names[] = {
+    "byte",
+    "ascii",
+    "times",
+};
+uint8_t num_asm_direcs = sizeof(asm_direc_names) / sizeof(const char *);
+
 asm_dir *parse_directive(vector_token tokens, size_t *index)
 {
     asm_dir *out = new(asm_dir, {});
-    *index += 1;
+    size_t i = *index;
+    ++i;
 
-    out->name = tokens.data[*index];
-    // TODO
-    // directives like:
-    // .db
-    // .org
+    asm_direc_type type;
 
+    for (uint8_t i = 0; i != num_asm_direcs; ++i)
+        if (tokens.data[i].len == strlen(asm_direc_names[i]) &&
+            !memcmp(tokens.data[i].ptr, asm_direc_names[i], tokens.data[i].len))
+            type = i;
+
+    printf("directive of type %s\n", asm_direc_names[type]);
+    out->cont = tokens.data[i];
+
+    *index = i;
     return out;
 }
 

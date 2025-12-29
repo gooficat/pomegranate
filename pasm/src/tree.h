@@ -38,9 +38,17 @@ class(asm_lab)
     uint16_t offset;
 };
 
+enum(asm_direc_type,
+    {
+        DIREC_BYTE = 0,
+        DIREC_ASCI = 1,
+        DIREC_TIME = 2,
+    });
+
 class(asm_dir)
 {
-    str_view name;
+    asm_direc_type type;
+    str_view cont;
 };
 
 vec_type(asm_ins);
@@ -70,5 +78,9 @@ class(asm_tree)
     vector_asm_line lines;
     vector_asm_lab labs;
 };
+
+uint16_t parse_number(token tk);
+
+asm_ins *parse_instruction(vector_token tokens, size_t *index);
 
 asm_tree make_tree(vector_token tokens);

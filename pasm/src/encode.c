@@ -160,6 +160,41 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                         displacement = arg.value;
                         printf("imm\n");
                     }
+                    do
+                    {
+                        asm_arg prev_arg = arg;
+                        if (arg.operation)
+                            arg = *arg.application;
+                        else
+                            break;
+
+                        uint16_t v;
+                        if (arg.references_label)
+                            v = unit->labels.data[arg.value].offset;
+                        else
+                        {
+                            v = arg.value;
+                            printf("arg value of %hu\n", v);
+                        }
+
+                        switch (prev_arg.operation)
+                        {
+                        case '*':
+                            displacement *= v;
+                            break;
+                        case '+':
+                            displacement += v;
+                            break;
+                        case '-':
+                            displacement -= v;
+                            break;
+                        case '/':
+                            displacement /= v;
+                            break;
+                        default:
+                            break;
+                        }
+                    } while (arg.type == ARG_IMM);
                 }
                 if (!base)
                 {
@@ -226,6 +261,31 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         push(unit->bytes, disp[i]);
 }
 
+void encode_direc(asm_encode_unit *unit, size_t i)
+{
+    asm_dir dir = *(asm_dir *)(unit->tree.lines.data[i].ptr);
+
+    switch (dir.type)
+    {
+    case DIREC_TIME: {
+        uint16_t num = parse_number(dir.cont);
+        while (num-- > 0)
+            encode_ins(unit, i + 1);
+        i += 2;
+    }
+    break;
+        break;
+    case DIREC_BYTE: {
+        uint16_t num = parse_number(dir.cont);
+        push(unit->bytes, num);
+        ++i;
+    }
+    break;
+    case DIREC_ASCI:
+        break; // TODO
+    }
+}
+
 void encode_unit(asm_encode_unit *unit)
 {
     unit->requires_repass = false;
@@ -246,6 +306,7 @@ void encode_unit(asm_encode_unit *unit)
         }
         break;
         case LINE_DIREC:
+            encode_direc(unit, i);
             break;
         }
 }

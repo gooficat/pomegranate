@@ -1,7 +1,9 @@
 #pragma once
 
+#include "parse.h"
 #include "spec.h"
 #include "tree.h"
+
 
 vec_type(uint8_t);
 
