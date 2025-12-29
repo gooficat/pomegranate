@@ -26,6 +26,12 @@ token_block read_tokens(const char *path)
     size_t i = 0;
     while (out.cont[i])
     {
+        if (out.cont[i] == ';')
+        {
+            while (out.cont[++i] && out.cont[i] != '\n')
+                ;
+            continue;
+        }
         token tk;
         if (isspace(out.cont[i]))
         {

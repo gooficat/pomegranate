@@ -60,8 +60,9 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
     asm_arg out = {0};
     size_t i = *index;
 
-    if (isdigit(tokens.data[i].ptr[0]))
+    if (tokens.data[i].ptr[0] == '$')
     {
+        ++i;
         out.value = parse_number(tokens.data[i]);
 
         if (out.value > 0xFF)
@@ -72,9 +73,8 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         ++i;
         // todo: check for operator
     }
-    else if (tokens.data[i].ptr[0] == '$')
+    else if (isdigit(tokens.data[i].ptr[0]))
     {
-        ++i;
         if (isdigit(tokens.data[i].ptr[0]))
             out.value = parse_number(tokens.data[i]);
         else
@@ -132,7 +132,7 @@ asm_ins *parse_instruction(vector_token tokens, size_t *index)
     out->name = tokens.data[i++];
 
     out->args[0] = parse_arg(tokens, &i);
-    if (tokens.data[i].ptr[0] == ',')
+    if (i < tokens.len && tokens.data[i].ptr[0] == ',')
     {
         ++i;
         out->args[1] = parse_arg(tokens, &i);

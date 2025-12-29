@@ -1,2 +1,19 @@
+; this is an assembly syntax by gooficat
+; it is derived from at & t assembly
+; a label is an alphanumerical followed by a colon
+; if there is no colon, it is an instruction if it comes on its own without anything before it
+; an alphanumerical can also be referencing a label if its name is not that of an instruction
+; a percent sign indicates a register
+; a number defaults to an immediate value, and if there is a dollar sign before it, it is a memory address.
+;this is the opposite of gnu assembly
+; a square left bracket means indirection begins
+; a square right bracket ends the indirection
+; for supporting 6502 style syntaxes, we allow indirection to be like this:
+; "lda [%x, $6741]"
+; hexadecimal and binary are supported too, without
+; 0x and 0b prefixes
 main:
-    movq %ax, [%cx + $67 + $32]
+    mov %ax, [%cx + 67 + 32]
+    int 0x10
+
+; a file may not end without a newline or comment

@@ -7,14 +7,11 @@ void print_arg(asm_arg arg)
 {
     printf("\t");
     if (arg.indirection)
-        printf("indirect");
-    else
-        printf("arg");
-    printf("%hu ", arg.value);
-
+        printf("in");
+    printf("direct arg. type %i, value %hu \n", arg.type, arg.value);
     if (arg.operation)
     {
-        printf(" %c", arg.operation);
+        printf("\t%c", arg.operation);
         print_arg(*arg.application);
     }
     printf("\n");
