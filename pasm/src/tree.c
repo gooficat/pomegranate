@@ -1,6 +1,8 @@
 #include "tree.h"
 #include "parse.h"
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 uint16_t parse_number(token tk)
 {
@@ -30,6 +32,27 @@ uint16_t parse_number(token tk)
     return out;
 }
 
+asm_arg parse_reg_arg(token tk)
+{
+    asm_arg out = {0};
+    for (uint8_t i = 0; i < num_regs8; ++i)
+        if (strlen(regs8[i].name) == tk.len && !memcmp(tk.ptr, regs8[i].name, tk.len))
+        {
+            out.value = i;
+            out.type = ARG_R8;
+            return out;
+        }
+    for (uint8_t i = 0; i < num_regs16; ++i)
+        if (strlen(regs16[i].name) == tk.len && !memcmp(tk.ptr, regs16[i].name, tk.len))
+        {
+            out.value = i;
+            out.type = ARG_R16;
+            return out;
+        }
+
+    return out;
+}
+
 asm_arg parse_arg(vector_token tokens, size_t *index)
 {
     asm_arg out = {0};
@@ -43,6 +66,9 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
             out.type = ARG_IMM16;
         else
             out.type = ARG_IMM8;
+
+        ++i;
+        // todo: check for operator
     }
     else if (tokens.data[i].ptr[0] == '$')
     {
@@ -58,6 +84,18 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
             out.type = ARG_M16;
         else
             out.type = ARG_M8;
+
+        ++i;
+    }
+    else if (tokens.data[i].ptr[0] == '%')
+    {
+        ++i;
+        out = parse_reg_arg(tokens.data[i]);
+        ++i;
+    }
+    else
+    {
+        out.type = NO_ARG;
     }
 
     *index = i;
@@ -73,7 +111,10 @@ asm_ins *parse_instruction(vector_token tokens, size_t *index)
 
     out->args[0] = parse_arg(tokens, &i);
     if (tokens.data[i].ptr[0] == ',')
+    {
+        ++i;
         out->args[1] = parse_arg(tokens, &i);
+    }
 
     *index = i;
 
@@ -86,6 +127,10 @@ asm_lab *parse_directive(vector_token tokens, size_t *index)
     *index += 1;
 
     out->name = tokens.data[*index];
+    // TODO
+    // directives like:
+    // .db
+    // .org
 
     return out;
 }
@@ -121,6 +166,7 @@ asm_tree make_tree(vector_token tokens)
             line.type = LINE_INSTR;
             line.ptr = parse_instruction(tokens, &i);
         }
+        printf("type %i, v %.*s\n", line.type, tk.len, tk.ptr);
         push(tree.lines, line);
     }
     return tree;

@@ -1,4 +1,5 @@
 #include "parse.h"
+#include "tree.h"
 #include <assert.h>
 #include <stdio.h>
 
@@ -13,6 +14,14 @@ int main(int argc, char *argv[])
     {
         token tk = block.toks.data[i];
         printf("%.*s\t", tk.len, tk.ptr);
+    }
+
+    printf("\n");
+    asm_tree tree = make_tree(block.toks);
+
+    for (size_t i = 0; i < tree.lines.len; ++i)
+    {
+        printf("type %i\n", tree.lines.data[i].type);
     }
 
     printf("finished\n");
