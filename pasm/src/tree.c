@@ -27,7 +27,7 @@ uint16_t parse_number(token tk)
         radix = 10;
     }
 
-    out = strtoull(tk.ptr, &eo, radix);
+    out = strtoull(bo, &eo, radix);
 
     return out;
 }
@@ -40,6 +40,7 @@ asm_arg parse_reg_arg(token tk)
         {
             out.value = i;
             out.type = ARG_R8;
+            printf("r8\n");
             return out;
         }
     for (uint8_t i = 0; i < num_regs16; ++i)
@@ -47,6 +48,7 @@ asm_arg parse_reg_arg(token tk)
         {
             out.value = i;
             out.type = ARG_R16;
+            printf("r16\n");
             return out;
         }
 
@@ -93,10 +95,30 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         out = parse_reg_arg(tokens.data[i]);
         ++i;
     }
+    else if (tokens.data[i].ptr[0] == '[')
+    {
+        ++i;
+        out = parse_arg(tokens, &i);
+        ++out.indirection;
+    }
     else
     {
         out.type = NO_ARG;
     }
+    uint8_t next_indir = out.indirection;
+    while (i < tokens.len && tokens.data[i].ptr[0] == ']')
+    {
+        --next_indir;
+        ++i;
+    }
+    if (i < tokens.len && tokens.data[i].len == 1 && tokens.data[i].ptr[0] != '.' && tokens.data[i].ptr[0] != ',')
+    {
+        out.operation = tokens.data[i].ptr[0];
+        ++i;
+        out.application = new(asm_arg, parse_arg(tokens, &i));
+        out.application->indirection += next_indir;
+    }
+    // todo: operator parsing
 
     *index = i;
     return out;
@@ -116,14 +138,22 @@ asm_ins *parse_instruction(vector_token tokens, size_t *index)
         out->args[1] = parse_arg(tokens, &i);
     }
 
+    if (out->args[0].type != NO_ARG)
+    {
+        if (out->args[1].type != NO_ARG)
+            printf("%.*s has 2 args\n", out->name.len, out->name.ptr);
+        else
+            printf("%.*s has 1 args\n", out->name.len, out->name.ptr);
+    }
+
     *index = i;
 
     return out;
 }
 
-asm_lab *parse_directive(vector_token tokens, size_t *index)
+asm_dir *parse_directive(vector_token tokens, size_t *index)
 {
-    asm_lab *out;
+    asm_dir *out = new(asm_dir, {});
     *index += 1;
 
     out->name = tokens.data[*index];
@@ -166,7 +196,7 @@ asm_tree make_tree(vector_token tokens)
             line.type = LINE_INSTR;
             line.ptr = parse_instruction(tokens, &i);
         }
-        printf("type %i, v %.*s\n", line.type, tk.len, tk.ptr);
+        printf("type %i, val: %.*s\n", line.type, tk.len, tk.ptr);
         push(tree.lines, line);
     }
     return tree;

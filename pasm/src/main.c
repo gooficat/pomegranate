@@ -21,7 +21,26 @@ int main(int argc, char *argv[])
 
     for (size_t i = 0; i < tree.lines.len; ++i)
     {
-        printf("type %i\n", tree.lines.data[i].type);
+        if (tree.lines.data[i].type == LINE_INSTR)
+        {
+            asm_ins ins = *(asm_ins *)(tree.lines.data[i].ptr);
+            printf("instruc '%.*s'\n", ins.name.len, ins.name.ptr);
+            for (uint8_t j = 0; j != 2; ++j)
+            {
+                if (ins.args[j].type)
+                {
+                    if (ins.args[j].indirection)
+                        printf("\tindirect arg\n");
+                    else
+                        printf("\targ\n");
+                }
+            }
+        }
+        else if (tree.lines.data[i].type == LINE_LABEL)
+        {
+            asm_lab lab = *(asm_lab *)(tree.lines.data[i].ptr);
+            printf("label '%.*s'\n", lab.name.len, lab.name.ptr);
+        }
     }
 
     printf("finished\n");

@@ -28,6 +28,11 @@ class(asm_lab)
     uint16_t offset;
 };
 
+class(asm_dir)
+{
+    str_view name;
+};
+
 vec_type(asm_ins);
 vec_type(asm_lab);
 

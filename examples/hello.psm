@@ -1,2 +1,2 @@
 main:
-    movq %rax, %rcx
+    movq %ax, [%cx]
