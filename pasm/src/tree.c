@@ -50,9 +50,9 @@ asm_arg parse_reg_arg(token tk)
 size_t find_label(asm_tree *tree, token token)
 {
     for (size_t i = 0; i != tree->labs.len; ++i)
-        if (token.len == tree->labs.data[i].name.len)
+        if (token.len == tree->labs.data[i].name.len && !memcmp(token.ptr, tree->labs.data[i].name.ptr, token.len))
             return i;
-
+    printf("label doesnt exist\n");
     return (size_t)-1;
 }
 
@@ -239,9 +239,11 @@ asm_tree make_tree(vector_token tokens)
         }
         else if (i < tokens.len - 1 && tokens.data[i + 1].ptr[0] == ':')
         {
-            printf("label %.*s\n", tokens.data[i].len, tokens.data[i].ptr);
+            printf("label %.*s\n", tk.len, tk.ptr);
             line.type = LINE_LABEL;
-            line.ptr = new(asm_lab_key, find_label(&tree, tokens.data[i]));
+            asm_lab_key k = find_label(&tree, tk);
+            printf("label at %i\n", k);
+            line.ptr = new(asm_lab_key, k);
             i += 2;
         }
         else

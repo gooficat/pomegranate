@@ -24,7 +24,7 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
         case ARG_IMM:
             if (spec.type == IMM)
             {
-                printf("spec imm match\n");
+                // printf("spec imm match\n");
                 if (arg.value > 0xFF && spec.size == BYT)
                     return false;
                 return true;
@@ -57,7 +57,6 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
         case ARG_REG: {
             if (spec.type == GEN || spec.type == EFF || spec.type == ADD)
             {
-                printf("spec reg match\n");
                 if (spec.size == BYT)
                     return regs[arg.value].type == REG_8;
                 else
@@ -78,9 +77,9 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
 
 bool match_spec(asm_ins ins, opcode_s prof, asm_encode_unit unit)
 {
-    printf("checking spec for %02hhx\n", prof.opcode);
-    uint8_t len = strlen(prof.name);
-    if (len != ins.name.len || memcmp(ins.name.ptr, prof.name, strlen(prof.name)))
+    // printf("checking spec for %02hhx\n", prof.opcode);
+
+    if (strlen(prof.name) != ins.name.len || memcmp(ins.name.ptr, prof.name, ins.name.len))
         return false;
 
     return match_arg(ins.args[0], prof.spec[0], unit) && match_arg(ins.args[1], prof.spec[1], unit);
@@ -261,8 +260,8 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         }
     }
 
-    printf("0x%02hhx opcode. does%s have modrm which is 0x%hhx. displacement length %hhu\n", opcode,
-        has_modrm ? "" : " not", modrm, displ);
+    // printf("0x%02hhx opcode. does%s have modrm which is 0x%hhx. displacement length %hhu\n", opcode,
+    // has_modrm ? "" : " not", modrm, displ);
 
     push(unit->bytes, opcode);
     if (has_modrm)
@@ -356,9 +355,11 @@ void encode_line(asm_encode_unit *unit, size_t *idx)
         break;
     case LINE_LABEL: {
         asm_lab_key k = *(asm_lab_key *)unit->tree.lines.data[i].ptr;
-        printf("encountered label %.*s\n", unit->tree.labs.data[k].name.len, unit->tree.labs.data[k].name.ptr);
+        // printf("encountered label %.*s\n", unit->tree.labs.data[k].name.len, unit->tree.labs.data[k].name.ptr);
         if (unit->tree.labs.data[k].offset != unit->bytes.len)
         {
+            printf("Label contents do not match byte offset. %hu vs %llu\n", unit->tree.labs.data[k].offset,
+                unit->bytes.len);
             unit->requires_repass = true;
             unit->tree.labs.data[k].offset = unit->bytes.len;
         }

@@ -43,6 +43,9 @@ const opcode_s ops[] = {
     // unexpected behaviour without error, but is here to save time so i can get to testing for now. TODO revisit and
     // add specific options for specific regs
     {"mov", 0xb8, {{ADD, WOR}, {IMM, WOR}}},
+    {"mov", 0xb0, {{ADD, BYT}, {IMM, BYT}}},
+
+    {"int", 0xcd, {{IMM, BYT}, {0}}},
 
     {"call", 0xe8, {{REL, VRI}, {0}}},
     {"jmp", 0xe9, {{REL, VRI}, {0}}},

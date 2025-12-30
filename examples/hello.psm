@@ -1,12 +1,17 @@
 
 main:
-    mov %ax, 32
-    jmp $main
-end:
-    .times 10 - end .byte 0
+    mov %al, 0x03
+    mov %ah, 0
+    int 0x10
+noww: 
+    mov %al, 0x5A
+    mov %bh, 0
+    ; jmp $0
+; end:
+;     .times 510 - end .byte 0
 
-    .byte 0x55
-    .byte 0xAA
+;     .byte 0x55
+;     .byte 0xAA
 
 ; a file may not end without a newline or comment
 
