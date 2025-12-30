@@ -65,7 +65,16 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
     if (tokens.data[i].ptr[0] == '$')
     {
         ++i;
-        out.value = parse_number(tokens.data[i]);
+        if (isdigit(tokens.data[i].ptr[0]))
+        {
+
+            out.value = parse_number(tokens.data[i]);
+        }
+        else
+        {
+            out.references_label = true;
+            out.value = find_label(tree, tokens.data[i]);
+        }
 
         out.type = ARG_MEM;
 
@@ -164,6 +173,7 @@ const char *asm_direc_names[] = {
     "byte",
     "ascii",
     "times",
+    "org",
 };
 uint8_t num_asm_direcs = sizeof(asm_direc_names) / sizeof(const char *);
 

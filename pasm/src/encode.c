@@ -36,14 +36,14 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
                 return true;
             if (spec.type == REL)
             {
-                uint16_t loff;
+                int16_t loff;
                 if (arg.references_label)
-                    loff = unit.tree.labs.data[arg.value].offset;
+                    loff = unit.tree.labs.data[arg.value].offset; // - 2;
                 else
                     loff = arg.value;
                 if (spec.size == BYT)
                 {
-                    if (unit.bytes.len - 3 - loff > 0xFF)
+                    if (abs((int16_t)loff - (int16_t)unit.bytes.len /* - 3*/) > 0xFF)
                         return false;
                     return true;
                 }
@@ -107,6 +107,7 @@ void encode_ins(asm_encode_unit *unit, size_t i)
     for (uint8_t i = 0; i != 2; ++i)
     {
         asm_arg arg = ins.args[i];
+        printf("Arg %i for %.*s does %sref label\n", i, ins.name.len, ins.name.ptr, arg.references_label ? "" : "not ");
         if (!arg.type)
             break;
         asm_arg_spec spec = op.spec[i];
@@ -123,6 +124,9 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 v = unit->tree.labs.data[arg.value].offset;
             else
                 v = arg.value;
+
+            v += unit->curr_org;
+
             disp[displ++] = v & 0xFF;
             if (spec.size != BYT)
                 disp[displ++] = (v >> 8) & 0xFF;
@@ -248,12 +252,12 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 printf("no label ref\n");
             }
             if (spec.size != BYT)
-                o = v - unit->bytes.len + 3;
+                o = v - unit->bytes.len - 3; // - 3;
             else
-                o = (uint8_t)(v - unit->bytes.len + 2);
+                o = v - unit->bytes.len - 2;
 
-            printf(
-                "calculated offset for ins ending at %llu and abs addr is %hu, as being %04hx", unit->bytes.len, v, o);
+            printf("calculated offset for ins ending at %llu and abs addr is %hu, as being %04hx\n", unit->bytes.len, v,
+                o);
 
             disp[displ++] = o & 0xFF;
             if (spec.size != BYT)
@@ -395,6 +399,7 @@ asm_encode_unit encode_tree(asm_tree tree)
         .tree = tree,
         .bytes = make_vec(uint8_t),
         .requires_repass = true,
+        .curr_org = 0,
     };
 
     while (out.requires_repass)

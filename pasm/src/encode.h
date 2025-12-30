@@ -11,6 +11,7 @@ class(asm_encode_unit)
     vector_uint8_t bytes;
     asm_tree tree;
     bool requires_repass;
+    uint16_t curr_org;
 };
 
 opcode_s find_opcode(asm_ins ins, asm_encode_unit unit);

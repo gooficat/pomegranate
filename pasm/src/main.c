@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     // }
 
     for (size_t i = 0; i != encoded.tree.labs.len; ++i)
-        printf("label is offset %hu\n ", encoded.tree.labs.data[i].offset);
+        printf("label is offset %hu\n", encoded.tree.labs.data[i].offset);
 
     for (size_t i = 0; i != encoded.bytes.len; ++i)
         printf("%02hhx ", encoded.bytes.data[i]);
