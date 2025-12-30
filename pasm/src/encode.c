@@ -283,7 +283,7 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
         {
             arg = *arg.application;
             uint16_t v;
-            if (dir.args.data[0].references_label)
+            if (arg.references_label)
                 v = unit->tree.labs.data[arg.value].offset;
             else
                 v = arg.value;
@@ -302,6 +302,7 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
                 num /= v;
                 break;
             }
+            op = arg.operation;
         }
         size_t pi = ++i;
         while (num > 0)
