@@ -1,4 +1,5 @@
 #include "tree.h"
+#include "encode.h"
 #include "parse.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -46,7 +47,16 @@ asm_arg parse_reg_arg(token tk)
     return out;
 }
 
-asm_arg parse_arg(vector_token tokens, size_t *index)
+size_t find_label(asm_tree *tree, token token)
+{
+    for (size_t i = 0; i != tree->labs.len; ++i)
+        if (token.len == tree->labs.data[i].name.len)
+            return i;
+
+    return (size_t)-1;
+}
+
+asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
 {
     asm_arg out = {0};
     size_t i = *index;
@@ -61,13 +71,14 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
         ++i;
         // todo: check for operator
     }
-    else if (isdigit(tokens.data[i].ptr[0]))
+    else if (isalnum(tokens.data[i].ptr[0]))
     {
         if (isdigit(tokens.data[i].ptr[0]))
             out.value = parse_number(tokens.data[i]);
         else
         {
             out.references_label = true;
+            out.value = find_label(tree, tokens.data[i]);
         }
 
         out.type = ARG_IMM;
@@ -83,7 +94,7 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
     else if (tokens.data[i].ptr[0] == '[')
     {
         ++i;
-        out = parse_arg(tokens, &i);
+        out = parse_arg(tokens, &i, tree);
         ++out.indirection;
     }
     else
@@ -102,25 +113,28 @@ asm_arg parse_arg(vector_token tokens, size_t *index)
     {
         out.operation = tokens.data[i].ptr[0];
         ++i;
-        out.application = new(asm_arg, parse_arg(tokens, &i));
+        out.application = new(asm_arg, parse_arg(tokens, &i, tree));
     }
 
     *index = i;
     return out;
 }
 
-asm_ins *parse_instruction(vector_token tokens, size_t *index)
+asm_ins *parse_instruction(vector_token tokens, size_t *index, asm_tree *tree)
 {
     asm_ins *out = new(asm_ins, {});
 
     size_t i = *index;
     out->name = tokens.data[i++];
 
-    out->args[0] = parse_arg(tokens, &i);
-    if (i < tokens.len && tokens.data[i].ptr[0] == ',')
+    if (!is_instruction(tokens.data[i]))
     {
-        ++i;
-        out->args[1] = parse_arg(tokens, &i);
+        out->args[0] = parse_arg(tokens, &i, tree);
+        if (i < tokens.len && tokens.data[i].ptr[0] == ',')
+        {
+            ++i;
+            out->args[1] = parse_arg(tokens, &i, tree);
+        }
     }
 
     if (out->args[0].type != NO_ARG)
@@ -130,6 +144,8 @@ asm_ins *parse_instruction(vector_token tokens, size_t *index)
         else
             printf("%.*s has 1 args\n", out->name.len, out->name.ptr);
     }
+    else
+        printf("%.*s has 0 args\n", out->name.len, out->name.ptr);
 
     *index = i;
 
@@ -168,7 +184,22 @@ asm_tree make_tree(vector_token tokens)
     asm_tree tree = {
         .lines = make_vec(asm_line),
     };
-    size_t i = 0;
+    size_t i;
+    for (i = 0; i != tokens.len - 1; ++i)
+    {
+        if (tokens.data[i + 1].ptr[0] == ':')
+        {
+            push(tree.labs,
+                (asm_lab){
+                    .name = tokens.data[i],
+                    .offset = 0,
+                } //
+            );
+            i += 2;
+        }
+    }
+
+    i = 0;
     while (i < tokens.len)
     {
         token tk = tokens.data[i];
@@ -181,23 +212,26 @@ asm_tree make_tree(vector_token tokens)
         }
         else if (tokens.data[i + 1].ptr[0] == ':')
         {
-            push(tree.labs,
-                (asm_lab){
-                    .name = tokens.data[i],
-                    .offset = 0,
-                } //
-            );
+
             line.type = LINE_LABEL;
-            line.ptr = new(asm_lab_key, tree.labs.len - 1);
+            line.ptr = new(asm_lab_key, find_label(&tree, tokens.data[i]));
             i += 2;
         }
         else
         {
             line.type = LINE_INSTR;
-            line.ptr = parse_instruction(tokens, &i);
+            line.ptr = parse_instruction(tokens, &i, &tree);
         }
         printf("type %i, val: %.*s\n", line.type, tk.len, tk.ptr);
         push(tree.lines, line);
     }
     return tree;
+}
+
+bool is_instruction(token t)
+{
+    for (size_t i = 0; i != num_ops; ++i)
+        if (t.len == strlen(ops[i].name) && memcmp(ops[i].name, t.ptr, t.len))
+            return true;
+    return false;
 }

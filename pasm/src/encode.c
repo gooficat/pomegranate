@@ -281,8 +281,9 @@ void encode_direc(asm_encode_unit *unit, size_t i)
         ++i;
     }
     break;
-    case DIREC_ASCI:
-        break; // TODO
+    case DIREC_ASCI: {
+    }
+    break; // TODO
     }
 }
 

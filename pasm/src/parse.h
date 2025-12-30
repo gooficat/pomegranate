@@ -2,6 +2,7 @@
 
 #include "spec.h"
 #include "util.h"
+#include <stdbool.h>
 
 typedef str_view token;
 

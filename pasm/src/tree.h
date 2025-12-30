@@ -79,8 +79,10 @@ class(asm_tree)
     vector_asm_lab labs;
 };
 
+bool is_instruction(token t);
+
 uint16_t parse_number(token tk);
 
-asm_ins *parse_instruction(vector_token tokens, size_t *index);
+asm_ins *parse_instruction(vector_token tokens, size_t *index, asm_tree *tree);
 
 asm_tree make_tree(vector_token tokens);
