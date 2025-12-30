@@ -45,10 +45,25 @@ const opcode_s ops[] = {
     {"mov", 0xb8, {{ADD, WOR}, {IMM, WOR}}},
     {"mov", 0xb0, {{ADD, BYT}, {IMM, BYT}}},
 
+    {"mov", 0x8e, {{SEG, WOR}, {EFF, WOR}}},
+
     {"int", 0xcd, {{IMM, BYT}, {0}}},
 
     {"call", 0xe8, {{REL, VRI}, {0}}},
     {"jmp", 0xeb, {{REL, BYT}, {0}}},
     {"jmp", 0xe9, {{REL, VRI}, {0}}},
+
+    {"cli", 0xFA, {{0}}},
+    {"sti", 0xFB, {{0}}},
+
+    {"lodsb", 0xAC, {{0}}},
+
+    {"cmp", 0x3C, {{ADD, BYT}, {IMM, BYT}}},
+    {"cmp", 0x3D, {{ADD, VRI}, {IMM, VRI}}},
+
+    {"js", 0x78, {{REL, BYT}, {0}}},
+    {"jz", 0x74, {{REL, BYT}, {0}}},
+
+    {"hlt", 0xF4, {{0}}},
 };
 const uint16_t num_ops = sizeof(ops) / sizeof(opcode_s);

@@ -83,6 +83,11 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
     }
     else if (isalnum(tokens.data[i].ptr[0]))
     {
+        if (i + 1 < tokens.len && tokens.data[i + 1].ptr[0] == ':')
+        {
+            out.type = NO_ARG;
+            return out;
+        }
         if (isdigit(tokens.data[i].ptr[0]))
             out.value = parse_number(tokens.data[i]);
         else
@@ -111,6 +116,13 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
         ++i;
         out = parse_arg(tokens, &i, tree);
         ++out.indirection;
+    }
+    else if (tokens.data[i].ptr[0] == '\'')
+    {
+        ++i;
+        out.type = ARG_IMM;
+        out.value = tokens.data[i].ptr[0];
+        ++i;
     }
     else
     {
@@ -186,11 +198,9 @@ asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
     for (uint8_t j = 0; j != num_asm_direcs; ++j)
         if (tokens.data[i].len == strlen(asm_direc_names[j]))
         {
-            printf("Matches length %hhu", tokens.data[i].len);
-            if (!memcmp(tokens.data[i].ptr, asm_direc_names[j], tokens.data[j].len))
-            {
+            printf("Matches length %hhu\n", tokens.data[i].len);
+            if (!memcmp(tokens.data[i].ptr, asm_direc_names[j], tokens.data[i].len))
                 out->type = j;
-            }
         }
 
     printf("directive of type %i aka %s\n", out->type, asm_direc_names[out->type]);
@@ -204,6 +214,10 @@ asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
         {
             printf("added immediate to directive args\n");
             push(out->args, arg);
+            if (i + 1 >= tokens.len || tokens.data[i].ptr[0] != ',')
+                break;
+            else
+                ++i;
         }
         else
         {
@@ -239,6 +253,7 @@ asm_tree make_tree(vector_token tokens)
     i = 0;
     while (i < tokens.len)
     {
+        printf("again!\n");
         token tk = tokens.data[i];
         asm_line line;
 
@@ -268,6 +283,7 @@ asm_tree make_tree(vector_token tokens)
         printf("type %i, val: %.*s\n", line.type, tk.len, tk.ptr);
         push(tree.lines, line);
     }
+    printf("tree gen finished\n");
     return tree;
 }
 

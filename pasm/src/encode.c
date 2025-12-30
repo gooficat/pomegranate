@@ -107,25 +107,35 @@ void encode_ins(asm_encode_unit *unit, size_t i)
     for (uint8_t i = 0; i != 2; ++i)
     {
         asm_arg arg = ins.args[i];
-        printf("Arg %i for %.*s does %sref label\n", i, ins.name.len, ins.name.ptr, arg.references_label ? "" : "not ");
         if (!arg.type)
             break;
         asm_arg_spec spec = op.spec[i];
         switch (spec.type)
         {
         case GEN:
+        case SEG:
             has_modrm = true;
             modrm |= regs[arg.value].opcode << 3;
             break;
-        case IMM:
         case ABS: {
             uint16_t v;
             if (arg.references_label)
                 v = unit->tree.labs.data[arg.value].offset;
             else
                 v = arg.value;
-
             v += unit->curr_org;
+
+            disp[displ++] = v & 0xFF;
+            if (spec.size != BYT)
+                disp[displ++] = (v >> 8) & 0xFF;
+        }
+        break;
+        case IMM: {
+            uint16_t v;
+            if (arg.references_label)
+                v = unit->tree.labs.data[arg.value].offset + unit->curr_org;
+            else
+                v = arg.value;
 
             disp[displ++] = v & 0xFF;
             if (spec.size != BYT)
@@ -352,6 +362,10 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     case DIREC_ASCI: {
     }
     break; // TODO
+    case DIREC_ORG:
+        unit->curr_org = arg.value;
+        ++i;
+        break;
     }
     *idx = i;
 }
@@ -390,7 +404,10 @@ void encode_unit(asm_encode_unit *unit)
     unit->bytes.len = 0;
     size_t i = 0;
     while (i < unit->tree.lines.len)
+    {
+        printf("encoding line\n");
         encode_line(unit, &i);
+    }
 }
 
 asm_encode_unit encode_tree(asm_tree tree)
@@ -402,8 +419,11 @@ asm_encode_unit encode_tree(asm_tree tree)
         .curr_org = 0,
     };
 
+    printf("now encoding tree..\n");
+
     while (out.requires_repass)
     {
+        printf("encode pass...\n");
         encode_unit(&out);
     }
 

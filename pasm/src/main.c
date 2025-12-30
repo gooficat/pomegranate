@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < block.toks.len; ++i)
     {
         token tk = block.toks.data[i];
-        printf("%.*s\t", tk.len, tk.ptr);
+        printf("'%.*s'\t", tk.len, tk.ptr);
     }
 
     printf("\n");

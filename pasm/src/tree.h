@@ -43,6 +43,7 @@ enum(asm_direc_type,
         DIREC_BYTE = 0,
         DIREC_ASCI = 1,
         DIREC_TIME = 2,
+        DIREC_ORG = 3,
     });
 
 vec_type(asm_arg);
