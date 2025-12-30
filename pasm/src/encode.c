@@ -262,6 +262,43 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         push(unit->bytes, disp[i]);
 }
 
+uint16_t assemble_time_math(asm_arg arg, asm_encode_unit *unit)
+{
+    uint16_t num;
+    if (arg.references_label)
+        num = unit->tree.labs.data[arg.value].offset;
+    else
+        num = arg.value;
+
+    char op = arg.operation;
+    while (arg.application)
+    {
+        arg = *arg.application;
+        uint16_t v;
+        if (arg.references_label)
+            v = unit->tree.labs.data[arg.value].offset;
+        else
+            v = arg.value;
+
+        switch (op)
+        {
+        case '+':
+            num += v;
+            break;
+        case '-':
+            num -= v;
+            break;
+        case '*':
+            num *= v;
+        case '/':
+            num /= v;
+            break;
+        }
+        op = arg.operation;
+    }
+    return num;
+}
+
 void encode_direc(asm_encode_unit *unit, size_t *idx)
 {
     size_t i = *idx;
@@ -272,38 +309,7 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     switch (dir.type)
     {
     case DIREC_TIME: {
-        uint16_t num;
-        if (dir.args.data[0].references_label)
-            num = unit->tree.labs.data[arg.value].offset;
-        else
-            num = arg.value;
-
-        char op = arg.operation;
-        while (arg.application)
-        {
-            arg = *arg.application;
-            uint16_t v;
-            if (arg.references_label)
-                v = unit->tree.labs.data[arg.value].offset;
-            else
-                v = arg.value;
-
-            switch (op)
-            {
-            case '+':
-                num += v;
-                break;
-            case '-':
-                num -= v;
-                break;
-            case '*':
-                num *= v;
-            case '/':
-                num /= v;
-                break;
-            }
-            op = arg.operation;
-        }
+        uint16_t num = assemble_time_math(arg, unit);
         size_t pi = ++i;
         while (num > 0)
         {
