@@ -342,12 +342,10 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     }
     break;
     case DIREC_BYTE: {
-        push(unit->bytes, arg.value);
-        for (size_t j = 1; j < dir.args.len; ++j)
+        for (size_t j = 0; j < dir.args.len; ++j)
         {
-            arg = dir.args.data[j];
-            push(unit->bytes, arg.value);
-            printf("next arg val %hu\n", arg.value);
+            push(unit->bytes, dir.args.data[j].value);
+            printf("next arg val %hu\n", dir.args.data[j].value);
         }
         ++i;
     }
