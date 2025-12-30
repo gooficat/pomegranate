@@ -1,10 +1,12 @@
 
 main:
-    add %ax, [%bx+%si+32+67]
+    add %ax, [%bx+%si]
     jmp $main
 end:
-    .times 32
+    .times 510 - end .byte 0
+
     .byte 0xAA
+    .byte 0x55
 
 ; a file may not end without a newline or comment
 

@@ -33,7 +33,7 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
             {
                 uint16_t loff;
                 if (arg.references_label)
-                    loff = unit.labels.data[arg.value].offset;
+                    loff = unit.tree.labs.data[arg.value].offset;
                 else
                     loff = arg.value;
                 if (spec.size == BYT)
@@ -114,7 +114,7 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         case ABS: {
             uint16_t v;
             if (arg.references_label)
-                v = unit->labels.data[arg.value].offset;
+                v = unit->tree.labs.data[arg.value].offset;
             else
                 v = arg.value;
             disp[displ++] = v & 0xFF;
@@ -132,48 +132,49 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             }
             else
             {
+                asm_arg *parg = &arg;
                 uint8_t base = 0;
                 uint8_t index = 0;
                 uint16_t displacement = 0;
 
-                if (arg.type == ARG_REG && (arg.value == i_BP || arg.value == i_BX))
+                if (parg->type == ARG_REG && (parg->value == i_BP || parg->value == i_BX))
                 {
-                    base = arg.value;
-                    arg = *arg.application;
+                    base = parg->value;
+                    parg = parg->application;
                     printf("base\n");
                 }
-                if (arg.type == ARG_REG)
+                if (parg && parg->type == ARG_REG)
                 {
-                    index = arg.value;
-                    arg = *arg.application;
+                    index = parg->value;
+                    parg = parg->application;
                     printf("index\n");
                 }
-                if (arg.type == ARG_IMM)
+                if (parg && parg->type == ARG_IMM)
                 {
-                    if (arg.references_label)
+                    if (parg->references_label)
                     {
-                        displacement = unit->labels.data[arg.value].offset;
+                        displacement = unit->tree.labs.data[parg->value].offset;
                         printf("index label\n");
                     }
                     else
                     {
-                        displacement = arg.value;
+                        displacement = parg->value;
                         printf("imm\n");
                     }
                     do
                     {
                         asm_arg prev_arg = arg;
-                        if (arg.operation)
-                            arg = *arg.application;
+                        if (parg->operation)
+                            parg = parg->application;
                         else
                             break;
 
                         uint16_t v;
-                        if (arg.references_label)
-                            v = unit->labels.data[arg.value].offset;
+                        if (parg->references_label)
+                            v = unit->tree.labs.data[parg->value].offset;
                         else
                         {
-                            v = arg.value;
+                            v = parg->value;
                             printf("arg value of %hu\n", v);
                         }
 
@@ -194,7 +195,7 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                         default:
                             break;
                         }
-                    } while (arg.type == ARG_IMM);
+                    } while (parg && parg->type == ARG_IMM);
                 }
                 if (!base)
                 {
@@ -231,7 +232,7 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             uint16_t o;
             if (arg.references_label)
             {
-                v = unit->labels.data[arg.value].offset;
+                v = unit->tree.labs.data[arg.value].offset;
             }
             else
                 v = arg.value;
@@ -267,23 +268,23 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     asm_dir dir = *(asm_dir *)(unit->tree.lines.data[i].ptr);
 
     asm_arg arg = dir.args.data[0];
-    printf("directive of type %i\n", dir.type);
+    // printf("directive of type %i and arg 1 has val %hu\n", dir.type, arg.value);
     switch (dir.type)
     {
     case DIREC_TIME: {
         uint16_t num;
         if (dir.args.data[0].references_label)
-            num = unit->labels.data[arg.value].offset;
+            num = unit->tree.labs.data[arg.value].offset;
         else
             num = arg.value;
 
         char op = arg.operation;
-        while (op)
+        while (arg.application)
         {
             arg = *arg.application;
             uint16_t v;
             if (dir.args.data[0].references_label)
-                v = unit->labels.data[arg.value].offset;
+                v = unit->tree.labs.data[arg.value].offset;
             else
                 v = arg.value;
 
@@ -311,7 +312,6 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
         }
     }
     break;
-        break;
     case DIREC_BYTE: {
         for (size_t j = 0; j < dir.args.len; ++j)
         {
@@ -335,14 +335,17 @@ void encode_line(asm_encode_unit *unit, size_t *idx)
     {
     case LINE_INSTR:
         encode_ins(unit, i);
+        ++i;
         break;
     case LINE_LABEL: {
         asm_lab_key k = *(asm_lab_key *)unit->tree.lines.data[i].ptr;
-        if (unit->labels.data[k].offset != unit->bytes.len)
+        printf("encountered label %.*s\n", unit->tree.labs.data[k].name.len, unit->tree.labs.data[k].name.ptr);
+        if (unit->tree.labs.data[k].offset != unit->bytes.len)
         {
             unit->requires_repass = true;
-            unit->labels.data[k].offset = unit->bytes.len;
+            unit->tree.labs.data[k].offset = unit->bytes.len;
         }
+        ++i;
     }
     break;
     case LINE_DIREC:
@@ -356,7 +359,8 @@ void encode_unit(asm_encode_unit *unit)
 {
     unit->requires_repass = false;
     unit->bytes.len = 0;
-    for (size_t i = 0; i < unit->tree.lines.len; ++i)
+    size_t i = 0;
+    while (i < unit->tree.lines.len)
         encode_line(unit, &i);
 }
 
@@ -365,16 +369,8 @@ asm_encode_unit encode_tree(asm_tree tree)
     asm_encode_unit out = {
         .tree = tree,
         .bytes = make_vec(uint8_t),
-        .labels = make_vec(asm_lab),
         .requires_repass = true,
     };
-
-    for (size_t i = 0; i != tree.lines.len; ++i)
-        if (tree.lines.data[i].type == LINE_LABEL)
-        {
-            asm_lab lb = *(asm_lab *)tree.lines.data[i].ptr;
-            push(out.labels, lb);
-        }
 
     while (out.requires_repass)
     {

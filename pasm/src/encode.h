@@ -10,7 +10,6 @@ class(asm_encode_unit)
 {
     vector_uint8_t bytes;
     asm_tree tree;
-    vector_asm_lab labels;
     bool requires_repass;
 };
 

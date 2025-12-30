@@ -239,7 +239,7 @@ asm_tree make_tree(vector_token tokens)
         }
         else if (i < tokens.len - 1 && tokens.data[i + 1].ptr[0] == ':')
         {
-            printf("label\n");
+            printf("label %.*s\n", tokens.data[i].len, tokens.data[i].ptr);
             line.type = LINE_LABEL;
             line.ptr = new(asm_lab_key, find_label(&tree, tokens.data[i]));
             i += 2;
@@ -260,7 +260,7 @@ asm_tree make_tree(vector_token tokens)
 bool is_instruction(token t)
 {
     for (size_t i = 0; i != num_ops; ++i)
-        if (t.len == strlen(ops[i].name) && memcmp(ops[i].name, t.ptr, t.len))
+        if (t.len == strlen(ops[i].name) && !memcmp(ops[i].name, t.ptr, t.len))
             return true;
     return false;
 }

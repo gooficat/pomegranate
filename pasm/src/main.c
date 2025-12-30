@@ -32,7 +32,7 @@ void print_instr(asm_ins ins)
 
 int main(int argc, char *argv[])
 {
-    assert(argc == 2 && "Error: Wrong argument count");
+    assert(argc == 3 && "Error: Wrong argument count");
     printf("\n\n\n\n\n\nNow assembling %s\n", argv[1]);
 
     token_block block = read_tokens(argv[1]);
@@ -65,7 +65,12 @@ int main(int argc, char *argv[])
     // }
 
     for (size_t i = 0; i != encoded.bytes.len; ++i)
-        printf("%02hhx\t", encoded.bytes.data[i]);
+        printf("%02hhx ", encoded.bytes.data[i]);
+
+    FILE *out = fopen(argv[2], "wb");
+    fwrite(encoded.bytes.data, 1, encoded.bytes.len, out);
+    printf("\nwrote %llu bytes to %s\n", encoded.bytes.len, argv[2]);
+    fclose(out);
 
     printf("finished\n");
     return 0;
