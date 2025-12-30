@@ -30,6 +30,7 @@ uint16_t parse_number(token tk)
 
     out = strtoull(bo, &eo, radix);
 
+    printf("Returning number %hu", out);
     return out;
 }
 
@@ -209,22 +210,38 @@ asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
     asm_arg arg;
     while (i < tokens.len)
     {
-        arg = parse_arg(tokens, &i, tree);
-        if (arg.type == ARG_IMM)
+        printf("parsing arg %c\n", tokens.data[i].ptr[0]);
+        if (tokens.data[i].ptr[0] == '"')
         {
-            printf("added immediate to directive args\n");
-            push(out->args, arg);
-            if (i + 1 >= tokens.len || tokens.data[i].ptr[0] != ',')
-                break;
-            else
-                ++i;
+            token tk = tokens.data[i];
+            arg.type = ARG_IMM;
+            for (uint16_t j = 1; j < tk.len - 1; ++j)
+            {
+                printf("CHARACTER IN STRING %c\n", tk.ptr[j]);
+                arg.value = tk.ptr[j];
+                push(out->args, arg);
+            }
+            ++i;
+            printf("Token is now %c\n", tokens.data[i].ptr[0]);
         }
         else
         {
+            arg = parse_arg(tokens, &i, tree);
+            if (arg.type != ARG_IMM)
+                break;
+            printf("just added arg with val %hu\n", arg.value);
+            push(out->args, arg);
+        }
+
+        if (i + 1 >= tokens.len || tokens.data[i].ptr[0] != ',')
+        {
+            printf("escaping\n");
             break;
         }
+        else
+            ++i;
     }
-
+    printf("finished parsing directive, %llu args\n", out->args.len);
     *index = i;
     return out;
 }

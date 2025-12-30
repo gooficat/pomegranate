@@ -251,9 +251,9 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 printf("no label ref\n");
             }
             if (spec.size != BYT)
-                o = v - unit->bytes.len - 3; // - 3;
+                o = v - (unit->bytes.len + 3); // - 3;
             else
-                o = v - unit->bytes.len - 2;
+                o = v - (unit->bytes.len + 2);
 
             printf("calculated offset for ins ending at %llu and abs addr is %hu, as being %04hx\n", unit->bytes.len, v,
                 o);
@@ -324,6 +324,8 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     size_t i = *idx;
     asm_dir dir = *(asm_dir *)(unit->tree.lines.data[i].ptr);
 
+    // printf("directive of type %i has %llu args\n", dir.type, dir.args.len);
+
     asm_arg arg = dir.args.data[0];
     // printf("directive of type %i and arg 1 has val %hu\n", dir.type, arg.value);
     switch (dir.type)
@@ -340,10 +342,12 @@ void encode_direc(asm_encode_unit *unit, size_t *idx)
     }
     break;
     case DIREC_BYTE: {
-        for (size_t j = 0; j < dir.args.len; ++j)
+        push(unit->bytes, arg.value);
+        for (size_t j = 1; j < dir.args.len; ++j)
         {
-            push(unit->bytes, arg.value);
             arg = dir.args.data[j];
+            push(unit->bytes, arg.value);
+            printf("next arg val %hu\n", arg.value);
         }
         ++i;
     }

@@ -46,6 +46,13 @@ token_block read_tokens(const char *path)
         if (isalnum(out.cont[i]))
             while (isalnum(out.cont[++i]))
                 ++tk.len;
+        else if (out.cont[i] == '"')
+        {
+            do
+                ++tk.len;
+            while (out.cont[++i] != '"');
+            ++i;
+        }
         else
             ++i;
         push(out.toks, tk);
