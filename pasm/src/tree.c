@@ -60,7 +60,8 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
 {
     asm_arg out = {0};
     size_t i = *index;
-
+    if (i >= tokens.len)
+        return out;
     if (tokens.data[i].ptr[0] == '$')
     {
         ++i;
@@ -77,6 +78,11 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
             out.value = parse_number(tokens.data[i]);
         else
         {
+            if (is_instruction(tokens.data[i]))
+            {
+                out.type = NO_ARG;
+                return out;
+            }
             out.references_label = true;
             out.value = find_label(tree, tokens.data[i]);
         }
@@ -115,6 +121,8 @@ asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree)
         ++i;
         out.application = new(asm_arg, parse_arg(tokens, &i, tree));
     }
+
+    printf("out type %i\n", out.type);
 
     *index = i;
     return out;
@@ -159,21 +167,37 @@ const char *asm_direc_names[] = {
 };
 uint8_t num_asm_direcs = sizeof(asm_direc_names) / sizeof(const char *);
 
-asm_dir *parse_directive(vector_token tokens, size_t *index)
+asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
 {
-    asm_dir *out = new(asm_dir, {});
+    asm_dir *out = new(asm_dir, {.args = make_vec(asm_arg)});
     size_t i = *index;
     ++i;
 
-    asm_direc_type type;
+    for (uint8_t j = 0; j != num_asm_direcs; ++j)
+        if (tokens.data[i].len == strlen(asm_direc_names[j]))
+        {
+            printf("Matches length %hhu", tokens.data[i].len);
+            if (!memcmp(tokens.data[i].ptr, asm_direc_names[j], tokens.data[j].len))
+            {
+                out->type = j;
+            }
+        }
 
-    for (uint8_t i = 0; i != num_asm_direcs; ++i)
-        if (tokens.data[i].len == strlen(asm_direc_names[i]) &&
-            !memcmp(tokens.data[i].ptr, asm_direc_names[i], tokens.data[i].len))
-            type = i;
+    printf("directive of type %i aka %s\n", out->type, asm_direc_names[out->type]);
+    ++i;
 
-    printf("directive of type %s\n", asm_direc_names[type]);
-    out->cont = tokens.data[i];
+    asm_arg arg;
+    for (;;)
+    {
+        arg = parse_arg(tokens, &i, tree);
+        if (arg.type == ARG_IMM)
+        {
+            printf("added immediate to directive args\n");
+            push(out->args, arg);
+        }
+        else
+            break;
+    }
 
     *index = i;
     return out;
@@ -183,9 +207,10 @@ asm_tree make_tree(vector_token tokens)
 {
     asm_tree tree = {
         .lines = make_vec(asm_line),
+        .labs = make_vec(asm_lab),
     };
     size_t i;
-    for (i = 0; i != tokens.len - 1; ++i)
+    for (i = 0; i < tokens.len - 1; ++i)
     {
         if (tokens.data[i + 1].ptr[0] == ':')
         {
@@ -207,18 +232,22 @@ asm_tree make_tree(vector_token tokens)
 
         if (tokens.data[i].ptr[0] == '.')
         {
-            line.type = LINE_DIREC;
-            line.ptr = parse_directive(tokens, &i);
-        }
-        else if (tokens.data[i + 1].ptr[0] == ':')
-        {
+            printf("direc\n");
 
+            line.type = LINE_DIREC;
+            line.ptr = parse_directive(tokens, &i, &tree);
+        }
+        else if (i < tokens.len - 1 && tokens.data[i + 1].ptr[0] == ':')
+        {
+            printf("label\n");
             line.type = LINE_LABEL;
             line.ptr = new(asm_lab_key, find_label(&tree, tokens.data[i]));
             i += 2;
         }
         else
         {
+            printf("instr\n");
+
             line.type = LINE_INSTR;
             line.ptr = parse_instruction(tokens, &i, &tree);
         }

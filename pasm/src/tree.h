@@ -45,10 +45,12 @@ enum(asm_direc_type,
         DIREC_TIME = 2,
     });
 
+vec_type(asm_arg);
+
 class(asm_dir)
 {
     asm_direc_type type;
-    str_view cont;
+    vector_asm_arg args;
 };
 
 vec_type(asm_ins);
@@ -82,6 +84,8 @@ class(asm_tree)
 bool is_instruction(token t);
 
 uint16_t parse_number(token tk);
+
+asm_arg parse_arg(vector_token tokens, size_t *index, asm_tree *tree);
 
 asm_ins *parse_instruction(vector_token tokens, size_t *index, asm_tree *tree);
 

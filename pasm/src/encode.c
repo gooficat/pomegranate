@@ -261,23 +261,63 @@ void encode_ins(asm_encode_unit *unit, size_t i)
         push(unit->bytes, disp[i]);
 }
 
-void encode_direc(asm_encode_unit *unit, size_t i)
+void encode_direc(asm_encode_unit *unit, size_t *idx)
 {
+    size_t i = *idx;
     asm_dir dir = *(asm_dir *)(unit->tree.lines.data[i].ptr);
 
+    asm_arg arg = dir.args.data[0];
+    printf("directive of type %i\n", dir.type);
     switch (dir.type)
     {
     case DIREC_TIME: {
-        uint16_t num = parse_number(dir.cont);
-        while (num-- > 0)
-            encode_ins(unit, i + 1);
-        i += 2;
+        uint16_t num;
+        if (dir.args.data[0].references_label)
+            num = unit->labels.data[arg.value].offset;
+        else
+            num = arg.value;
+
+        char op = arg.operation;
+        while (op)
+        {
+            arg = *arg.application;
+            uint16_t v;
+            if (dir.args.data[0].references_label)
+                v = unit->labels.data[arg.value].offset;
+            else
+                v = arg.value;
+
+            switch (op)
+            {
+            case '+':
+                num += v;
+                break;
+            case '-':
+                num -= v;
+                break;
+            case '*':
+                num *= v;
+            case '/':
+                num /= v;
+                break;
+            }
+        }
+        size_t pi = ++i;
+        while (num > 0)
+        {
+            i = pi;
+            encode_line(unit, &i);
+            --num;
+        }
     }
     break;
         break;
     case DIREC_BYTE: {
-        uint16_t num = parse_number(dir.cont);
-        push(unit->bytes, num);
+        for (size_t j = 0; j < dir.args.len; ++j)
+        {
+            push(unit->bytes, arg.value);
+            arg = dir.args.data[j];
+        }
         ++i;
     }
     break;
@@ -285,31 +325,39 @@ void encode_direc(asm_encode_unit *unit, size_t i)
     }
     break; // TODO
     }
+    *idx = i;
+}
+
+void encode_line(asm_encode_unit *unit, size_t *idx)
+{
+    size_t i = *idx;
+    switch (unit->tree.lines.data[i].type)
+    {
+    case LINE_INSTR:
+        encode_ins(unit, i);
+        break;
+    case LINE_LABEL: {
+        asm_lab_key k = *(asm_lab_key *)unit->tree.lines.data[i].ptr;
+        if (unit->labels.data[k].offset != unit->bytes.len)
+        {
+            unit->requires_repass = true;
+            unit->labels.data[k].offset = unit->bytes.len;
+        }
+    }
+    break;
+    case LINE_DIREC:
+        encode_direc(unit, &i);
+        break;
+    }
+    *idx = i;
 }
 
 void encode_unit(asm_encode_unit *unit)
 {
     unit->requires_repass = false;
     unit->bytes.len = 0;
-    for (size_t i = 0; i != unit->tree.lines.len; ++i)
-        switch (unit->tree.lines.data[i].type)
-        {
-        case LINE_INSTR:
-            encode_ins(unit, i);
-            break;
-        case LINE_LABEL: {
-            asm_lab_key k = *(asm_lab_key *)unit->tree.lines.data[i].ptr;
-            if (unit->labels.data[k].offset != unit->bytes.len)
-            {
-                unit->requires_repass = true;
-            }
-            unit->labels.data[k].offset = unit->bytes.len;
-        }
-        break;
-        case LINE_DIREC:
-            encode_direc(unit, i);
-            break;
-        }
+    for (size_t i = 0; i < unit->tree.lines.len; ++i)
+        encode_line(unit, &i);
 }
 
 asm_encode_unit encode_tree(asm_tree tree)

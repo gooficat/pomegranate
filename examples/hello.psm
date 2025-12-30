@@ -2,6 +2,9 @@
 main:
     add %ax, [%bx+%si+32+67]
     jmp $main
+end:
+    .times 32
+    .byte 0xAA
 
 ; a file may not end without a newline or comment
 
