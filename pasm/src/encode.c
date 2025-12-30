@@ -239,13 +239,21 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             if (arg.references_label)
             {
                 v = unit->tree.labs.data[arg.value].offset;
+                printf("Refs label %.*s\n", unit->tree.labs.data[arg.value].name.len,
+                    unit->tree.labs.data[arg.value].name.ptr);
             }
             else
+            {
                 v = arg.value;
+                printf("no label ref\n");
+            }
             if (spec.size != BYT)
-                o = 0 - v - unit->bytes.len - 3;
+                o = v - unit->bytes.len + 3;
             else
-                o = (uint8_t)(0 - v - unit->bytes.len - 2);
+                o = (uint8_t)(v - unit->bytes.len + 2);
+
+            printf(
+                "calculated offset for ins ending at %llu and abs addr is %hu, as being %04hx", unit->bytes.len, v, o);
 
             disp[displ++] = o & 0xFF;
             if (spec.size != BYT)
@@ -356,10 +364,9 @@ void encode_line(asm_encode_unit *unit, size_t *idx)
     case LINE_LABEL: {
         asm_lab_key k = *(asm_lab_key *)unit->tree.lines.data[i].ptr;
         // printf("encountered label %.*s\n", unit->tree.labs.data[k].name.len, unit->tree.labs.data[k].name.ptr);
+        printf("Label contents vs byte offset. %hu vs %llu\n", unit->tree.labs.data[k].offset, unit->bytes.len);
         if (unit->tree.labs.data[k].offset != unit->bytes.len)
         {
-            printf("Label contents do not match byte offset. %hu vs %llu\n", unit->tree.labs.data[k].offset,
-                unit->bytes.len);
             unit->requires_repass = true;
             unit->tree.labs.data[k].offset = unit->bytes.len;
         }

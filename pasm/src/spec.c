@@ -48,6 +48,7 @@ const opcode_s ops[] = {
     {"int", 0xcd, {{IMM, BYT}, {0}}},
 
     {"call", 0xe8, {{REL, VRI}, {0}}},
+    {"jmp", 0xeb, {{REL, BYT}, {0}}},
     {"jmp", 0xe9, {{REL, VRI}, {0}}},
 };
 const uint16_t num_ops = sizeof(ops) / sizeof(opcode_s);

@@ -187,7 +187,7 @@ asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
     ++i;
 
     asm_arg arg;
-    for (;;)
+    while (i < tokens.len)
     {
         arg = parse_arg(tokens, &i, tree);
         if (arg.type == ARG_IMM)
@@ -196,7 +196,9 @@ asm_dir *parse_directive(vector_token tokens, size_t *index, asm_tree *tree)
             push(out->args, arg);
         }
         else
+        {
             break;
+        }
     }
 
     *index = i;
