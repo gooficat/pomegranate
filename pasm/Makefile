@@ -1,6 +1,8 @@
 
 launch: build run
 
+qemu_test:
+	@qemu-system-x86_64 -drive file=../examples/hello.bin,format=raw
 
 debug:
 	@gdb -batch -ex "set args $(ARGS)" -ex "run" $(TARGET) -ex "bt"

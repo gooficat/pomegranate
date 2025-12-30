@@ -39,6 +39,11 @@ const opcode_s ops[] = {
     {"mov", 0x8a, {{GEN, BYT}, {EFF, BYT}}},
     {"mov", 0x8b, {{GEN, VRI}, {EFF, VRI}}},
 
+    // add to instruction. this is too general and giving wrong args will cause
+    // unexpected behaviour without error, but is here to save time so i can get to testing for now. TODO revisit and
+    // add specific options for specific regs
+    {"mov", 0xb8, {{ADD, WOR}, {IMM, WOR}}},
+
     {"call", 0xe8, {{REL, VRI}, {0}}},
     {"jmp", 0xe9, {{REL, VRI}, {0}}},
 };

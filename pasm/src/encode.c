@@ -22,9 +22,14 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
         switch (arg.type)
         {
         case ARG_IMM:
-            if (spec.type == IMM && arg.value > 0xFF && spec.size == BYT)
-                return false;
-            return true;
+            if (spec.type == IMM)
+            {
+                printf("spec imm match\n");
+                if (arg.value > 0xFF && spec.size == BYT)
+                    return false;
+                return true;
+            }
+            return false;
 
         case ARG_MEM:
             if (spec.type == ABS)
@@ -50,8 +55,9 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
             return false;
 
         case ARG_REG: {
-            if (spec.type == GEN || spec.type == EFF)
+            if (spec.type == GEN || spec.type == EFF || spec.type == ADD)
             {
+                printf("spec reg match\n");
                 if (spec.size == BYT)
                     return regs[arg.value].type == REG_8;
                 else
@@ -72,6 +78,7 @@ bool match_arg(asm_arg arg, asm_arg_spec spec, asm_encode_unit unit)
 
 bool match_spec(asm_ins ins, opcode_s prof, asm_encode_unit unit)
 {
+    printf("checking spec for %02hhx\n", prof.opcode);
     uint8_t len = strlen(prof.name);
     if (len != ins.name.len || memcmp(ins.name.ptr, prof.name, strlen(prof.name)))
         return false;
@@ -246,6 +253,9 @@ void encode_ins(asm_encode_unit *unit, size_t i)
                 disp[displ++] = (o >> 8) & 0xFF;
         }
         break;
+        case ADD:
+            opcode += regs[arg.value].opcode;
+            break;
         default:
             break;
         }

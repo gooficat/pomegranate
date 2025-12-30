@@ -13,6 +13,8 @@ enum(asm_enc_type,
         MEM,
         OFF,
         SEG,
+
+        ADD,
     });
 
 enum(asm_enc_size,
