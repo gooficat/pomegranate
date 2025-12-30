@@ -124,7 +124,7 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             else
                 v = arg.value;
             v += unit->curr_org;
-
+            // TODO add offset fix
             disp[displ++] = v & 0xFF;
             if (spec.size != BYT)
                 disp[displ++] = (v >> 8) & 0xFF;
