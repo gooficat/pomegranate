@@ -117,26 +117,15 @@ void encode_ins(asm_encode_unit *unit, size_t i)
             has_modrm = true;
             modrm |= regs[arg.value].opcode << 3;
             break;
+
+        case IMM:
         case ABS: {
-            uint16_t v;
-            if (arg.references_label)
-                v = unit->tree.labs.data[arg.value].offset;
-            else
-                v = arg.value;
-            v += unit->curr_org;
-            // TODO add offset fix
-            disp[displ++] = v & 0xFF;
-            if (spec.size != BYT)
-                disp[displ++] = (v >> 8) & 0xFF;
-        }
-        break;
-        case IMM: {
             uint16_t v;
             if (arg.references_label)
                 v = unit->tree.labs.data[arg.value].offset + unit->curr_org;
             else
                 v = arg.value;
-
+            // TODO add offset fix
             disp[displ++] = v & 0xFF;
             if (spec.size != BYT)
                 disp[displ++] = (v >> 8) & 0xFF;

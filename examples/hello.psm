@@ -18,12 +18,12 @@ print:
     int 0x10
     jmp $print
 
-done:
-    cli
-    hlt
 msg:
     .byte 'H','e','l,'l','o',' ','W','o','r','l','d','!',0
 
+done:
+    cli
+    hlt
 end:
     .times 510 - end .byte 0
 
