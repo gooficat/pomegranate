@@ -1,5 +1,4 @@
-#include "set.h"
-
+#include "spec.h"
 
 struct Opcode opcodes[] = {
     {"mov"},

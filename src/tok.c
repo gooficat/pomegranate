@@ -1,7 +1,7 @@
 #include "tok.h"
 #include <stdlib.h>
 #include <string.h>
-
+#include "print.h"
 
 void InitStream(struct TokenStream* stream, const char* path) {
     if (fopen_s(&stream->file, path, "rt")) {
@@ -53,4 +53,5 @@ void NextToken(struct TokenStream* stream) {
         }
         stream->token[i] = 0;
     }
+    debug_print("token '%s'\n", stream->token);
 }

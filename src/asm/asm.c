@@ -30,8 +30,37 @@ struct Label* FindLabel(const struct LabelArray* labels, const char* name) {
 }
 
 uint64_t NumberFromToken(char* token) {
-    char* end_of_number = token + strlen(token);
-    return strtoull(token, &end_of_number, 10); // TODO hex, binary
+    size_t tlen = strlen(token);
+    char* end_of_number = token + tlen;
+    int radix;
+    if (tlen > 2 && isalpha(token[1])) {
+        switch (token[1]) {
+        case 'x':
+            radix = 16;
+            break;
+        case 'b':
+            radix = 2;
+            break;
+        case 'o':
+            radix = 8;
+            break;
+        case 'z':
+            radix = 36;
+            break;
+        case 'a':
+            radix = 26;
+            break;
+        default:
+            fprintf(stderr, "Unknown letter in base specifier for %s\n", token);
+            exit(EXIT_FAILURE);
+            break;
+        }
+        token += 2;
+    }
+    else 
+        radix = 10;
+
+    return strtoull(token, &end_of_number, radix);
 }
 
 uint64_t NumberOrLabel(struct AssemblyUnit* unit) {
@@ -59,7 +88,7 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
     if (unit->stream.token[0] == '%') {
         NextToken(&unit->stream);
         out.type = ASM_ARG_REG;
-        out.value = 67674141;
+        out.value = FindRegIndex(unit->stream.token);
         // TODO
     }
     else if (unit->stream.token[0] == '$') {
@@ -112,6 +141,8 @@ inline void ParseInstruction(struct AssemblyUnit* unit) {
             break;
         NextToken(&unit->stream);
     }
+
+    EncodeInstruction(ins, unit);
 }
 
 inline void AddLabel(char* name, struct LabelArray* labels) {

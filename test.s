@@ -4,4 +4,4 @@
 
 main:
     ret
-    mov $67, %rax
+    mov 0xFFFF, %rax

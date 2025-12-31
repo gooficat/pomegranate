@@ -31,8 +31,25 @@ struct Opcode {
     enum ArgumentSpec args[MAX_ARGS];
 };
 
+#define MAX_DISPLACEMENT 8
+
+
+extern struct Opcode opcodes[];
+extern size_t num_opcodes;
+
+extern struct Register registers[];
+extern size_t num_registers;
+
 bool IsInstruction(const char* name);
 
 bool SpecMatch(struct Instruction instruction);
 
 bool OpMatch(struct Instruction instruction, struct Opcode op);
+
+void EncodeInstruction(struct Instruction instruction, struct AssemblyUnit* unit);
+
+struct Opcode* FindOp(struct Instruction instruction);
+size_t FindOpIndex(struct Instruction ins);
+
+struct Register* FindReg(const char* name);
+size_t FindRegIndex(const char* name);
