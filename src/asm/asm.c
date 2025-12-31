@@ -62,6 +62,34 @@ uint64_t NumberFromToken(char* token) {
     return strtoull(token, &end_of_number, radix);
 }
 
+bool IsOperand(char c) {
+    switch(c) {
+        case'+':
+        case'-':
+        case'*':
+        case'/':
+        case'%':
+            return true;
+        default:
+            return false;
+    }
+}
+
+int64_t ArithChar(int64_t a, char o, int64_t b) {
+    switch(o) {
+        case'+':
+            return a + b;
+        case'-':
+            return a - b;
+        case'*':
+            return a * b;
+        case'/':
+            return a / b;
+        case'%':
+            return a % b;
+    }
+}
+
 uint64_t NumberOrLabel(struct AssemblyUnit* unit) {
     uint64_t out;
     if (isdigit(unit->stream.token[0]))
@@ -82,6 +110,7 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
         out.indirection += 1;
         NextToken(&unit->stream);
     }
+
     if (unit->stream.token[0] == '$') {
         out.type = ASM_ARG_MEM;
 
@@ -97,12 +126,18 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
         else
             out.type = ASM_ARG_REG;
     }
+    
     NextToken(&unit->stream);
     while (unit->stream.token[0] == ']') {
         out.redirection += 1;
         NextToken(&unit->stream);
     }
-    
+    if (IsOperand(unit->stream.token[0])) {
+        out.operation = unit->stream.token[0];
+        NextToken(&unit->stream);
+        out.operand = malloc(sizeof(struct Argument));
+        *out.operand = ParseArgument(unit);
+    }
 
     debug_print("\tArgument of type %i and value %llu\n", out.type, out.value);
 
