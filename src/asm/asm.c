@@ -2,7 +2,6 @@
 #include "tok.h"
 #include "print.h"
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -23,25 +22,27 @@ struct AssemblyUnit {
     struct ByteArray bytes;
 };
 
-enum ArgumentType {
-    ASM_ARG_IMM,
-    ASM_ARG_ASC,
-    ASM_ARG_REG,
-    ASM_ARG_MEM,
-};
-
-struct Argument {
-    enum ArgumentType type;
-    uint64_t value;
-    uint8_t indirection; // how many degrees of indirection ([ before the arg)
-    uint8_t redirection; // how many ] after the arg
-};
-
 struct Label* FindLabel(const struct LabelArray* labels, const char* name) {
     for (size_t i = 0; i != labels->num_labels; ++i)
         if (!strcmp(labels->labels[i].name, name))
             return &labels->labels[i];
     return NULL;
+}
+
+uint64_t NumberFromToken(char* token) {
+    char* end_of_number = token + strlen(token);
+    return strtoull(token, &end_of_number, 10); // TODO hex, binary
+}
+
+uint64_t NumberOrLabel(struct AssemblyUnit* unit) {
+    uint64_t out;
+    if (isdigit(unit->stream.token[0])) {
+        out = NumberFromToken(unit->stream.token);
+    }
+    else {
+        out = FindLabel(&unit->labels, unit->stream.token)->offset;
+    }
+    return out;
 }
 
 struct Argument ParseArgument(struct AssemblyUnit* unit) {
@@ -56,16 +57,18 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
     if (unit->stream.token[0] == '%') {
         NextToken(&unit->stream);
         out.type = ASM_ARG_REG;
+        out.value = 67674141;
         // TODO
     }
-    else if (isdigit(unit->stream.token[0])) {
-        out.type = ASM_ARG_IMM;
-        char* end_of_number = unit->stream.token + strlen(unit->stream.token);
-        out.value = strtoull(unit->stream.token, &end_of_number, 10); // TODO hex, binary
+    else if (unit->stream.token[0] == '$') {
+        out.type = ASM_ARG_MEM;
+
+        NextToken(&unit->stream);
+        out.value = NumberOrLabel(unit);
     }
-    else if (isalpha(unit->stream.token[0])) {
+    else {
         out.type = ASM_ARG_IMM;
-        out.value = FindLabel(&unit->labels, unit->stream.token)->offset;
+        out.value = NumberOrLabel(unit);
     }
     NextToken(&unit->stream);
     
@@ -88,15 +91,16 @@ inline void ParseDirective(struct AssemblyUnit* unit) {
 }
 
 inline void ParseInstruction(struct AssemblyUnit* unit) {
-    char mnemonic[INSTRUC_MAX];
-    debug_print("instruction %s\n", unit->stream.token);
-    strcpy(mnemonic, unit->stream.token);
-    NextToken(&unit->stream);
-    struct Argument args[MAX_ARGS];
+    struct Instruction ins;
     uint8_t num_args = 0;
 
+    debug_print("instruction %s\n", unit->stream.token);
+    strcpy(ins.mnemonic, unit->stream.token);
+    
+    NextToken(&unit->stream);
+
     while (unit->stream.token[0] && unit->stream.token[0] != '.') {
-        args[num_args] = ParseArgument(unit);
+        ins.args[num_args] = ParseArgument(unit);
         num_args += 1;
 
         if (unit->stream.token[0] != ',')
