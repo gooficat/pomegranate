@@ -2,7 +2,8 @@
 
 
 struct Opcode opcodes[] = {
-    {""},
+    {"mov"},
+    {"ret"},
 };
 size_t num_opcodes = sizeof(opcodes) / sizeof(struct Opcode);
 
@@ -62,7 +63,7 @@ struct Register registers[] = {
     {"ss", 0x02, REG_SEG},
     {"ds", 0x03, REG_SEG},
     {"fs", 0x04, REG_SEG},
-    {"gs", 0x05, REG_SEG},
+    {"gs", 0x05, REG_SEG}, // TODO expanded x64 register set
 
 };
 size_t num_registers = sizeof(registers) / sizeof(struct Register);

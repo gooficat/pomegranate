@@ -49,6 +49,8 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
     struct Argument out;
     out.indirection = 0;
     out.redirection = 0;
+
+
     while (unit->stream.token[0] == '[') {
         out.indirection += 1;
         NextToken(&unit->stream);
@@ -100,6 +102,9 @@ inline void ParseInstruction(struct AssemblyUnit* unit) {
     NextToken(&unit->stream);
 
     while (unit->stream.token[0] && unit->stream.token[0] != '.') {
+        if (IsInstruction(unit->stream.token))
+            break;
+    
         ins.args[num_args] = ParseArgument(unit);
         num_args += 1;
 
