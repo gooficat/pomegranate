@@ -1,16 +1,11 @@
 #include <stdio.h>
 #include "tok.h"
+#include "asm/asm.h"
 
 int main() {
 	printf("Hello!\n");
 
-	struct TokenStream stream;
-	InitStream(&stream, "../../test.s");
-
-	while (stream.token[0]) {
-		printf("'%s' ", stream.token);
-		NextToken(&stream);
-	}
+	struct ByteArray bytes = assemble("../../test.s");
 
 	return 0;
 }

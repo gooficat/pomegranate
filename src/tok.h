@@ -12,3 +12,5 @@ struct TokenStream {
 void InitStream(struct TokenStream* stream, const char* path);
 
 void NextToken(struct TokenStream* stream);
+
+void SetStream(struct TokenStream* stream);
