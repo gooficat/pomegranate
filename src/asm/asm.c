@@ -51,11 +51,10 @@ uint64_t NumberFromToken(char* token) {
             radix = 26;
             break;
         default:
-            fprintf(stderr, "Unknown letter in base specifier for %s\n", token);
-            exit(EXIT_FAILURE);
+            radix = token[1] - '0'; // neat!
             break;
         }
-        token += 2;
+        token += 2; // skip over the specifier
     }
     else 
         radix = 10;
@@ -65,12 +64,11 @@ uint64_t NumberFromToken(char* token) {
 
 uint64_t NumberOrLabel(struct AssemblyUnit* unit) {
     uint64_t out;
-    if (isdigit(unit->stream.token[0])) {
+    if (isdigit(unit->stream.token[0]))
         out = NumberFromToken(unit->stream.token);
-    }
-    else {
+    else
         out = FindLabel(&unit->labels, unit->stream.token)->offset;
-    }
+
     return out;
 }
 
@@ -84,31 +82,27 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
         out.indirection += 1;
         NextToken(&unit->stream);
     }
-
-    if (unit->stream.token[0] == '%') {
-        NextToken(&unit->stream);
-        out.type = ASM_ARG_REG;
-        out.value = FindRegIndex(unit->stream.token);
-        // TODO
-    }
-    else if (unit->stream.token[0] == '$') {
+    if (unit->stream.token[0] == '$') {
         out.type = ASM_ARG_MEM;
 
         NextToken(&unit->stream);
         out.value = NumberOrLabel(unit);
     }
     else {
-        out.type = ASM_ARG_IMM;
-        out.value = NumberOrLabel(unit);
+        out.value = FindRegIndex(unit->stream.token);
+        if (out.value == (size_t)-1) {
+            out.type = ASM_ARG_IMM;
+            out.value = NumberOrLabel(unit);
+        }
+        else
+            out.type = ASM_ARG_REG;
     }
     NextToken(&unit->stream);
-    
-    // TODO operators
-
     while (unit->stream.token[0] == ']') {
         out.redirection += 1;
         NextToken(&unit->stream);
     }
+    
 
     debug_print("\tArgument of type %i and value %llu\n", out.type, out.value);
 

@@ -25,6 +25,8 @@ struct Argument {
     uint64_t value;
     uint8_t indirection; // how many degrees of indirection ([ before the arg)
     uint8_t redirection; // how many ] after the arg
+    char operation;
+    struct Argument* operand;
 };
 
 

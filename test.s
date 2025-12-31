@@ -4,4 +4,4 @@
 
 main:
     ret
-    mov 0xFFFF, %rax
+    mov [0xFF], rax
