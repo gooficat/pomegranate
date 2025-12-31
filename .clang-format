@@ -1,9 +1,0 @@
-
-Language: C
-BasedOnStyle: Microsoft
-
-IndentWrappedFunctionNames: false
-
-AllowAllParametersOfDeclarationOnNextLine: false
-BinPackParameters: false
-AlignAfterOpenBracket: false
