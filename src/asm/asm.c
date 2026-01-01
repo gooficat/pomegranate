@@ -29,39 +29,6 @@ struct Label* FindLabel(const struct LabelArray* labels, const char* name) {
     return NULL;
 }
 
-uint64_t NumberFromToken(char* token) {
-    size_t tlen = strlen(token);
-    char* end_of_number = token + tlen;
-    int radix;
-    if (tlen > 2 && isalpha(token[1])) {
-        switch (token[1]) {
-        case 'x':
-            radix = 16;
-            break;
-        case 'b':
-            radix = 2;
-            break;
-        case 'o':
-            radix = 8;
-            break;
-        case 'z':
-            radix = 36;
-            break;
-        case 'a':
-            radix = 26;
-            break;
-        default:
-            radix = token[1] - '0'; // neat!
-            break;
-        }
-        token += 2; // skip over the specifier
-    }
-    else 
-        radix = 10;
-
-    return strtoull(token, &end_of_number, radix);
-}
-
 bool IsOperand(char c) {
     switch(c) {
         case'+':
@@ -107,8 +74,6 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
     struct Argument out;
     out.indirection = 0;
     out.redirection = 0;
-
-    
 
     while (unit->stream.token[0] == '[') {
         out.indirection += 1;

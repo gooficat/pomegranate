@@ -9,29 +9,15 @@
 enum ArgumentSize {
     SZ_BYTE = 1,
     SZ_WORD = 2,
-    SZ_DWORD = 4,
-    SZ_QWORD = 8,
 };
 
 enum ArgumentSpec {
     NO_ARG = 0,
-    ARG_EFF,
-    ARG_IMM,
-    ARG_GEN,
-};
-
-enum RegisterType {
-    REG_B,
-    REG_W,
-    REG_D,
-    REG_Q,
-    REG_SEG,
 };
 
 struct Register {
     const char* name;
     uint8_t opcode;
-    enum RegisterType type;
 };
 
 struct Opcode {

@@ -1,5 +1,6 @@
-#include "check.h"
-#include "tok.h"
+#ifdef IGNORETHIS
+
+#include "../check.h"
 
 bool IsInstruction(const char* name) {
     for (size_t i = 0; i != num_opcodes; ++i)
@@ -21,12 +22,15 @@ struct Opcode* FindOp(struct Instruction ins) {
 }
 
 size_t FindRegIndex(const char* name) {
-    if (!isdigit(name[0])) return (size_t)-1;
-    size_t n = NumberFromToken(name);
-    if (n > 15) return (size_t)-1;
+    for (size_t i = 0; i != num_registers; ++i)
+        if (!strcmp(name, registers[i].name))
+            return i;
+    return (size_t)-1;
 }
 
 struct Register* FindReg(const char* name) {
     size_t i = FindRegIndex(name);
     return i == (size_t)-1 ? NULL : &registers[i];
 }
+
+#endif
