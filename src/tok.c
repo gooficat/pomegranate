@@ -61,7 +61,7 @@ void NextToken(struct TokenStream *stream)
         }
         stream->token[i] = 0;
     }
-    debug_print("token '%s'\n", stream->token);
+    // debug_print("token '%s'\n", stream->token);
 }
 
 uint64_t NumberFromToken(char *token)

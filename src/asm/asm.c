@@ -18,15 +18,12 @@ void HandleDirective(struct AssemblyState *state)
     NextToken(&state->stream); // .
     debug_print("Directive %s\n", state->stream.token);
     NextToken(&state->stream); // name
+    NextToken(&state->stream); // arg
 }
 
 void HandleInstruction(struct AssemblyState *state)
 {
-    while (state->stream.buffer != '\n')
-    {
-        NextToken(&state->stream);
-        debug_print("arg tok '%s'\n", state->stream.token);
-    }
+    EncodeInstruction(state);
 }
 
 void HandleAlpha(struct AssemblyState *state)
@@ -34,6 +31,7 @@ void HandleAlpha(struct AssemblyState *state)
     struct Label *label = FindLabel(state);
     if (label)
     {
+        debug_print("Label '%s'\n", state->stream.token);
         if (label->offset != state->bytes_written)
         {
             label->offset = state->bytes_written;
