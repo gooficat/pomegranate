@@ -87,6 +87,9 @@ int64_t ArithChar(int64_t a, char o, int64_t b) {
             return a / b;
         case'%':
             return a % b;
+        default:
+            fprintf(stderr, "No operation for %c\n", o);
+            exit(EXIT_FAILURE);
     }
 }
 
@@ -105,38 +108,43 @@ struct Argument ParseArgument(struct AssemblyUnit* unit) {
     out.indirection = 0;
     out.redirection = 0;
 
+    
 
     while (unit->stream.token[0] == '[') {
         out.indirection += 1;
         NextToken(&unit->stream);
     }
+    if (IsOperand(unit->stream.token[0]) || unit->stream.token[0] == ',') {
+        out.operation = unit->stream.token[0];
+        NextToken(&unit->stream);
+    }
 
     if (unit->stream.token[0] == '$') {
         out.type = ASM_ARG_MEM;
+        debug_print("Memory arg\n");
 
         NextToken(&unit->stream);
         out.value = NumberOrLabel(unit);
     }
-    else {
+    else if (unit->stream.token[0] == '%') {
+        debug_print("Register arg\n");
+
+        out.type = ASM_ARG_REG;
+        
+        NextToken(&unit->stream);
         out.value = FindRegIndex(unit->stream.token);
-        if (out.value == (size_t)-1) {
-            out.type = ASM_ARG_IMM;
-            out.value = NumberOrLabel(unit);
-        }
-        else
-            out.type = ASM_ARG_REG;
+    }
+    else {
+        debug_print("Immediate arg\n");
+
+        out.type = ASM_ARG_IMM;
+        out.value = NumberOrLabel(unit);
     }
     
     NextToken(&unit->stream);
     while (unit->stream.token[0] == ']') {
         out.redirection += 1;
         NextToken(&unit->stream);
-    }
-    if (IsOperand(unit->stream.token[0])) {
-        out.operation = unit->stream.token[0];
-        NextToken(&unit->stream);
-        out.operand = malloc(sizeof(struct Argument));
-        *out.operand = ParseArgument(unit);
     }
 
     debug_print("\tArgument of type %i and value %llu\n", out.type, out.value);
@@ -159,16 +167,13 @@ inline void ParseInstruction(struct AssemblyUnit* unit) {
     
     NextToken(&unit->stream);
 
-    while (unit->stream.token[0] && unit->stream.token[0] != '.') {
-        if (IsInstruction(unit->stream.token))
-            break;
-    
+    while (unit->stream.token[0] && unit->stream.token[0] != '.' && !IsInstruction(unit->stream.token)) {
+
         ins.args[num_args] = ParseArgument(unit);
         num_args += 1;
 
-        if (unit->stream.token[0] != ',')
+        if (!IsOperand(unit->stream.token[0]) && unit->stream.token[0] != ',')
             break;
-        NextToken(&unit->stream);
     }
 
     EncodeInstruction(ins, unit);

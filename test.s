@@ -3,5 +3,5 @@
 .section text
 
 main:
+    mov [$main + 67], %rax
     ret
-    mov [0xFF], rax

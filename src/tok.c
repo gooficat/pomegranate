@@ -46,11 +46,8 @@ void NextToken(struct TokenStream* stream) {
             } while (stream->buffer != EOF && isalnum(stream->buffer));
         }
         else {
-            // do {
-            //     stream->token[i++] = stream->buffer;
-            //     stream->buffer = fgetc(stream->file);
-            // } while (stream->buffer != EOF && !isspace(stream->buffer) && !isalnum(stream->buffer));
-            stream->token[i++] = stream->buffer;
+            stream->token[0] = stream->buffer;
+            ++i;
             stream->buffer = fgetc(stream->file);
         }
         stream->token[i] = 0;

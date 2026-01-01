@@ -22,17 +22,26 @@ enum ArgumentType {
 
 struct Argument {
     enum ArgumentType type;
-    uint64_t value;
+    union {
+        uint64_t value;
+        char* str_value; // for ascii arg. directive only
+    };
     uint8_t indirection; // how many degrees of indirection ([ before the arg)
     uint8_t redirection; // how many ] after the arg
-    char operation;
-    struct Argument* operand;
+    char operation; // preceding operation (+-/*%), if 0 then no operand
 };
 
 
 struct Instruction {
     char mnemonic[MNEM_MAX];
-    struct Argument args[2];
+    struct Argument args[MAX_ARGS];
+};
+
+struct Directive {
+    char mnemonic[MNEM_MAX];
+    struct Argument *args;
+    uint16_t num_args;
 };
 
 struct ByteArray assemble(const char* file_path);
+
