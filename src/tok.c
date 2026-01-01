@@ -4,8 +4,10 @@
 #include "print.h"
 #include <stdint.h>
 
-void InitStream(struct TokenStream* stream, const char* path) {
-    if (fopen_s(&stream->file, path, "rt")) {
+void InitStream(struct TokenStream *stream, const char *path)
+{
+    if (fopen_s(&stream->file, path, "rt"))
+    {
         fprintf(stderr, "Failed to open file %s. exiting...\n", path);
         exit(EXIT_FAILURE);
     }
@@ -13,40 +15,46 @@ void InitStream(struct TokenStream* stream, const char* path) {
     NextToken(stream);
 }
 
-void SetStream(struct TokenStream* stream) {
+void SetStream(struct TokenStream *stream)
+{
     fseek(stream->file, 0L, SEEK_SET);
     stream->buffer = fgetc(stream->file);
     NextToken(stream);
 }
 
-void NextToken(struct TokenStream* stream) {
+void NextToken(struct TokenStream *stream)
+{
     while (isspace(stream->buffer))
         stream->buffer = fgetc(stream->file);
 
-    if (stream->buffer == EOF) {
+    if (stream->buffer == EOF)
+    {
         stream->token[0] = 0;
     }
-    else {
+    else
+    {
         unsigned char i = 0;
-        if (stream->buffer == '"') {
-            do {
+        if (stream->buffer == '"')
+        {
+            do
+            {
                 stream->token[i++] = stream->buffer;
                 stream->buffer = fgetc(stream->file);
-                
-                if (stream->buffer == '\\') {
-                    stream->token[i++] = stream->buffer;
-                    stream->buffer = fgetc(stream->file);
-                }
             } while (stream->buffer != '"');
+            stream->token[i++] = stream->buffer;
+            stream->buffer = fgetc(stream->file);
         }
 
-        if (isalnum(stream->buffer)) {
-            do {
+        else if (isalnum(stream->buffer) || stream->buffer == '_')
+        {
+            do
+            {
                 stream->token[i++] = stream->buffer;
                 stream->buffer = fgetc(stream->file);
-            } while (stream->buffer != EOF && isalnum(stream->buffer));
+            } while (stream->buffer != EOF && (isalnum(stream->buffer) || stream->buffer == '_'));
         }
-        else {
+        else
+        {
             stream->token[0] = stream->buffer;
             ++i;
             stream->buffer = fgetc(stream->file);
@@ -56,14 +64,15 @@ void NextToken(struct TokenStream* stream) {
     debug_print("token '%s'\n", stream->token);
 }
 
-
-
-uint64_t NumberFromToken(char* token) {
+uint64_t NumberFromToken(char *token)
+{
     size_t tlen = strlen(token);
-    char* end_of_number = token + tlen;
+    char *end_of_number = token + tlen;
     int radix;
-    if (tlen > 2 && isalpha(token[1])) {
-        switch (token[1]) {
+    if (tlen > 2 && isalpha(token[1]))
+    {
+        switch (token[1])
+        {
         case 'x':
             radix = 16;
             break;
@@ -85,7 +94,7 @@ uint64_t NumberFromToken(char* token) {
         }
         token += 2; // skip over the specifier
     }
-    else 
+    else
         radix = 10;
 
     return strtoull(token, &end_of_number, radix);

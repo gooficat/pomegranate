@@ -1,221 +1,111 @@
 #include "asm.h"
-#include "tok.h"
 #include "print.h"
+#include <string.h>
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include "platform.h"
 
-struct Label {
-    const char name[LABEL_MAX];
-    uint64_t offset;
-};
+void WriteByte(struct AssemblyState *state, uint8_t byte, bool do_write)
+{
+    ++state->bytes_written;
+    if (do_write)
+    {
+        fputc(byte, state->out);
+    }
+}
 
-struct LabelArray {
-    struct Label* labels;
-    size_t num_labels;
-    size_t capacity;
-};
+void HandleDirective(struct AssemblyState *state)
+{
+    NextToken(&state->stream); // .
+    debug_print("Directive %s\n", state->stream.token);
+    NextToken(&state->stream); // name
+}
 
-struct AssemblyUnit {
-    struct TokenStream stream;
-    struct LabelArray labels;
-    struct ByteArray bytes;
-};
+void HandleInstruction(struct AssemblyState *state)
+{
+    while (state->stream.buffer != '\n')
+    {
+        NextToken(&state->stream);
+        debug_print("arg tok '%s'\n", state->stream.token);
+    }
+}
 
-struct Label* FindLabel(const struct LabelArray* labels, const char* name) {
-    for (size_t i = 0; i != labels->num_labels; ++i)
-        if (!strcmp(labels->labels[i].name, name))
-            return &labels->labels[i];
+void HandleAlpha(struct AssemblyState *state)
+{
+    struct Label *label = FindLabel(state);
+    if (label)
+    {
+        if (label->offset != state->bytes_written)
+        {
+            label->offset = state->bytes_written;
+            state->labels_match = false;
+        }
+        NextToken(&state->stream);
+        NextToken(&state->stream);
+    }
+    else
+    {
+        HandleInstruction(state);
+    }
+}
+
+void Encode(struct AssemblyState *state, bool do_write)
+{
+    while (state->stream.token[0])
+    {
+        // debug_print("Starting line at token %s\n", state->stream.token);
+        if (state->stream.token[0] == '.')
+        {
+            HandleDirective(state);
+        }
+        else
+        {
+            HandleAlpha(state);
+        }
+    }
+}
+
+struct Label *FindLabel(struct AssemblyState *state)
+{
+    for (uint8_t i = 0; i != state->num_labels; ++i)
+    {
+        if (!strcmp(state->stream.token, state->labels[i].name))
+        {
+            return &state->labels[i];
+        }
+    }
+    // debug_print("not a label %s\n", state->stream.token);
     return NULL;
 }
 
-bool IsOperand(char c) {
-    switch(c) {
-        case'+':
-        case'-':
-        case'*':
-        case'/':
-        case'%':
-            return true;
-        default:
-            return false;
-    }
-}
-
-int64_t ArithChar(int64_t a, char o, int64_t b) {
-    switch(o) {
-        case'+':
-            return a + b;
-        case'-':
-            return a - b;
-        case'*':
-            return a * b;
-        case'/':
-            return a / b;
-        case'%':
-            return a % b;
-        default:
-            fprintf(stderr, "No operation for %c\n", o);
-            exit(EXIT_FAILURE);
-    }
-}
-
-uint64_t NumberOrLabel(struct AssemblyUnit* unit) {
-    uint64_t out;
-    if (isdigit(unit->stream.token[0]))
-        out = NumberFromToken(unit->stream.token);
-    else
-        out = FindLabel(&unit->labels, unit->stream.token)->offset;
-
-    return out;
-}
-
-struct Argument ParseArgument(struct AssemblyUnit* unit) {
-    struct Argument out;
-    out.indirection = 0;
-    out.redirection = 0;
-
-    while (unit->stream.token[0] == '[') {
-        out.indirection += 1;
-        NextToken(&unit->stream);
-    }
-    if (IsOperand(unit->stream.token[0]) || unit->stream.token[0] == ',') {
-        out.operation = unit->stream.token[0];
-        NextToken(&unit->stream);
-    }
-
-    if (unit->stream.token[0] == '$') {
-        out.type = ASM_ARG_MEM;
-        debug_print("Memory arg\n");
-
-        NextToken(&unit->stream);
-        out.value = NumberOrLabel(unit);
-    }
-    else if (unit->stream.token[0] == '%') {
-        debug_print("Register arg\n");
-
-        out.type = ASM_ARG_REG;
-        
-        NextToken(&unit->stream);
-        out.value = FindRegIndex(unit->stream.token);
-    }
-    else {
-        debug_print("Immediate arg\n");
-
-        out.type = ASM_ARG_IMM;
-        out.value = NumberOrLabel(unit);
-    }
-    
-    NextToken(&unit->stream);
-    while (unit->stream.token[0] == ']') {
-        out.redirection += 1;
-        NextToken(&unit->stream);
-    }
-
-    debug_print("\tArgument of type %i and value %llu\n", out.type, out.value);
-
-    return out;
-}
-
-inline void ParseDirective(struct AssemblyUnit* unit) {
-    debug_print("directive %s\n", unit->stream.token);
-    NextToken(&unit->stream);
-    NextToken(&unit->stream); // do nothing for now
-}
-
-inline void ParseInstruction(struct AssemblyUnit* unit) {
-    struct Instruction ins;
-    uint8_t num_args = 0;
-
-    debug_print("instruction %s\n", unit->stream.token);
-    strcpy(ins.mnemonic, unit->stream.token);
-    
-    NextToken(&unit->stream);
-
-    while (unit->stream.token[0] && unit->stream.token[0] != '.' && !IsInstruction(unit->stream.token)) {
-
-        ins.args[num_args] = ParseArgument(unit);
-        num_args += 1;
-
-        if (!IsOperand(unit->stream.token[0]) && unit->stream.token[0] != ',')
-            break;
-    }
-
-    EncodeInstruction(ins, unit);
-}
-
-inline void AddLabel(char* name, struct LabelArray* labels) {
-    size_t label_i = labels->num_labels;
-    labels->num_labels += 1;
-
-    if (labels->capacity < labels->num_labels) {
-        labels->capacity *= 2;
-        labels->labels = realloc(labels->labels, sizeof(labels->labels[0]) * labels->capacity);
-    }
-    strcpy(labels->labels[label_i].name, name);
-}
-
-bool encode(struct AssemblyUnit* unit) {
-    bool requires_repass = false;
-    debug_print("Beginning encode\n\n\n\n\n");
-    unit->bytes.num_bytes = 0;
-
-    while (unit->stream.token[0]) {
-        // debug_print("%s\n", unit->stream.token);
-
-        if (unit->stream.buffer == ':') {
-            struct Label* label = FindLabel(&unit->labels, unit->stream.token);
-            if (label->offset != unit->bytes.num_bytes) {
-                requires_repass = true;
-                label->offset = unit->bytes.num_bytes;
-            }
-            NextToken(&unit->stream);
-            NextToken(&unit->stream);
+void MarkLabels(struct AssemblyState *state)
+{
+    while (state->stream.token[0])
+    {
+        if (state->stream.buffer == ':')
+        {
+            debug_print("Label %s\n", state->stream.token);
+            strcpy(state->labels[state->num_labels++].name, state->stream.token);
         }
-        
-        else if (unit->stream.token[0] == '.') {
-            NextToken(&unit->stream);
-            ParseDirective(unit);
-        }
-        
-        else {
-            ParseInstruction(unit);
-        }
+        NextToken(&state->stream);
     }
-
-    return requires_repass;
 }
 
-struct ByteArray assemble(const char* file_path) {
-    struct AssemblyUnit unit;
+void Assemble(const char *input_file_path, const char *output_file_path)
+{
+    struct AssemblyState state;
+    InitStream(&state.stream, input_file_path);
 
+    state.num_labels = 0;
+    MarkLabels(&state);
 
-    unit.bytes.bytes = malloc(sizeof(unsigned char));
-    unit.bytes.num_bytes = 0;
-    unit.bytes.capacity = 1;
-    unit.labels.labels = malloc(sizeof(struct Label));
-    unit.labels.num_labels = 0;
-    unit.labels.capacity = 1;
-
-    InitStream(&unit.stream, file_path);
-
-    // find all the labels
-    while (unit.stream.token[0]) {
-        if (unit.stream.buffer == ':') {
-            debug_print("Added label '%s'\n", unit.stream.token);
-            AddLabel(unit.stream.token, &unit.labels);
-        }
-        NextToken(&unit.stream);
-    }
-
-    for (size_t i = 0; i != unit.labels.num_labels; ++i)
-        debug_print("unit contains label '%s'", unit.labels.labels[i].name);
-
-    // encode (returning the stream to the beginning each time)
+    state.labels_match = false;
     do
-        SetStream(&unit.stream);
-    while (encode(&unit));
-    
+    {
+        debug_print("Labelling pass\n");
+        SetStream(&state.stream);
+        Encode(&state, false);
+    } while (!state.labels_match);
 
-    return unit.bytes;
+    SetStream(&state.stream);
+    Encode(&state, true);
 }

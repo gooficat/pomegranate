@@ -1,11 +1,9 @@
-#include <stdio.h>
-#include "tok.h"
+#include "print.h"
 #include "asm/asm.h"
 
-int main() {
-	printf("Hello!\n");
-
-	struct ByteArray bytes = assemble("../../test.s");
-
+int main()
+{
+	Assemble("../../test.s", "../../test.bin");
+	debug_print("Done!");
 	return 0;
 }

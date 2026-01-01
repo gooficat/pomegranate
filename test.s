@@ -1,7 +1,18 @@
-.globl main
-.ascii "Hello, World!"
-.section text
+.global _start
 
-main:
-    mov [$main + 67], %15
-    ret
+.section ".text"
+
+_start:
+    mov $1, %rax
+    mov $1, %rdi
+
+    mov $message, %rsi
+    mov $13, %rdx
+    syscall
+
+    mov $60, %rax
+    xor %rdi, %rdi
+    syscall
+
+message:
+    .ascii "Hello, World!\n"

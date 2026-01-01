@@ -1,47 +1,43 @@
 #pragma once
 
-#include <stddef.h>
+#include "tok.h"
+#include <stdbool.h>
 #include <stdint.h>
-#include "spec.h"
 
 #define LABEL_MAX 32
+#define DIREC_MAX 7 // .section is the longest afaik
 
-struct ByteArray {
-    unsigned char* bytes;
-    size_t num_bytes;
-    size_t capacity;
+#define MAX_LABELS 255 // seems reasonable, aligns with uint8
+#define MAX_RELOCS 255 // no idea about this tbh
+
+struct Label
+{
+    char name[LABEL_MAX];
+    uint64_t offset;
 };
 
-
-enum ArgumentType {
-    ASM_ARG_IMM,
-    ASM_ARG_ASC,
-    ASM_ARG_REG,
-    ASM_ARG_MEM,
+struct Directive
+{
+    char name[DIREC_MAX];
 };
 
-struct Argument {
-    enum ArgumentType type;
-    union {
-        uint64_t value;
-        char* str_value; // for ascii arg. directive only
-    };
-    uint8_t indirection; // how many degrees of indirection ([ before the arg)
-    uint8_t redirection; // how many ] after the arg
-    char operation; // preceding operation (+-/*%), if 0 then no operand
+struct Relocation
+{
+    uint64_t offset; //
 };
 
+struct AssemblyState
+{
+    struct TokenStream stream;
+    FILE *out;
+    struct Label labels[MAX_LABELS];
+    struct Relocation Relocations[MAX_RELOCS];
+    uint8_t num_labels;
+    uint64_t bytes_written;
 
-struct Instruction {
-    char mnemonic[MNEM_MAX];
-    struct Argument args[MAX_ARGS];
+    bool labels_match;
 };
 
-struct Directive {
-    char mnemonic[MNEM_MAX];
-    struct Argument *args;
-    uint16_t num_args;
-};
+struct Label *FindLabel(struct AssemblyState *state);
 
-struct ByteArray assemble(const char* file_path);
-
+void Assemble(const char *input_file_path, const char *output_file_path);

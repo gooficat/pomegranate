@@ -1,0 +1,9 @@
+import `~/io`;
+
+main() {
+    str msg = "Hello, World\n\0";
+
+    io.printf(msg);
+
+    return 67;
+}
