@@ -15,11 +15,6 @@ enum ArgumentSpec {
     NO_ARG = 0,
 };
 
-struct Register {
-    const char* name;
-    uint8_t opcode;
-};
-
 struct Opcode {
     const char* mnemonic;
     uint8_t opcode;
@@ -28,12 +23,8 @@ struct Opcode {
 
 #define MAX_DISPLACEMENT 8
 
-
 extern struct Opcode opcodes[];
 extern size_t num_opcodes;
-
-extern struct Register registers[];
-extern size_t num_registers;
 
 bool SpecMatch(struct Argument arg, enum ArgumentSpec spec);
 

@@ -20,13 +20,9 @@ struct Opcode* FindOp(struct Instruction ins) {
     return i == (size_t)-1 ? NULL : &opcodes[i];
 }
 
-size_t FindRegIndex(const char* name) {
+size_t FindRegIndex(char* name) {
     if (!isdigit(name[0])) return (size_t)-1;
     size_t n = NumberFromToken(name);
     if (n > 15) return (size_t)-1;
-}
-
-struct Register* FindReg(const char* name) {
-    size_t i = FindRegIndex(name);
-    return i == (size_t)-1 ? NULL : &registers[i];
+    return n;
 }
