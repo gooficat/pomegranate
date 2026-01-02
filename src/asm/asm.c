@@ -37,7 +37,7 @@ void HandleAlpha(struct AssemblyState *state)
             label->offset = state->bytes_written;
             state->labels_match = false;
         }
-        NextToken(&state->stream);
+        state->stream.buffer = fgetc(state->stream.file);
         NextToken(&state->stream);
     }
     else
@@ -48,6 +48,7 @@ void HandleAlpha(struct AssemblyState *state)
 
 void Encode(struct AssemblyState *state, bool do_write)
 {
+    state->labels_match = true;
     while (state->stream.token[0])
     {
         // debug_print("Starting line at token %s\n", state->stream.token);
@@ -96,7 +97,6 @@ void Assemble(const char *input_file_path, const char *output_file_path)
     state.num_labels = 0;
     MarkLabels(&state);
 
-    state.labels_match = false;
     do
     {
         debug_print("Labelling pass\n");

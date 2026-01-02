@@ -4,3 +4,4 @@
 
 _start:
     mov $12, %rax
+    ret

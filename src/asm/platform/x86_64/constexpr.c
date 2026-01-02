@@ -64,7 +64,6 @@ int64_t EvalConst(struct AssemblyState *state)
         NextToken(&state->stream); // skip over (
         base = CompTimeArith(state);
     }
-    NextToken(&state->stream); // skip over ) or number
 
     return base;
 }
