@@ -2,6 +2,8 @@
 
 my programming language
 
+yes, i'm working on it again, now with ANOTHER rewrite
+
 purpose:
     being very lightweight to compile / assemble
     being easy to port (the assembler syntax leans well into being ported, stripped down, etc)
