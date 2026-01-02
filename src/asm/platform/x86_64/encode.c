@@ -7,26 +7,11 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "constexpr.h"
+
+#include "mnems.h"
+
 #define MNEM_MAX 24
-#define MAX_ARGS 3
-
-enum RegisterType
-{
-    REG_GENQ,
-};
-
-struct Register
-{
-    const char *name;
-    uint8_t code;
-    enum RegisterType type;
-};
-
-static const struct Register registers[] = {
-    {"rax", 0x00, REG_GENQ},
-};
-// neat constexpr trick
-static const uint8_t num_registers = sizeof(registers) / sizeof(struct Register);
 
 // find the register to match a name
 struct Register *FindRegister(const char *name)
@@ -83,6 +68,7 @@ struct Instruction
 };
 
 struct MemoryArgument ParseMemArg(struct AssemblyState *state);
+bool IsMnemonic(struct AssemblyState *state);
 
 // this parser is theoretically much simpler than my homebrew-syntax parser.
 // also gnu gas is very widespread. Besides, this isnt removing me of the option to revert to that syntax
@@ -101,7 +87,7 @@ struct Argument ParseArg(struct AssemblyState *state)
     {
         argument.type = ASM_ARG_IMM;
         NextToken(&state->stream);
-        argument.imm = NumberFromToken(state->stream.token);
+        argument.imm = EvalConst(state);
     }
     else
     {
@@ -116,14 +102,20 @@ struct Instruction ParseIns(struct AssemblyState *state)
 {
     struct Instruction instruction;
 
+    debug_print("mnemonic %s\n", state->stream.token);
     strcpy(instruction.mnemonic, state->stream.token);
+    NextToken(&state->stream);
+
+    while (state->stream.token[0] != '.' && !IsMnemonic(state))
+    {
+    }
 
     return instruction;
 }
 
 void EncodeInstruction(struct AssemblyState *state)
 {
-    debug_print("mnemonic %s\n", state->stream.token);
+    struct Instruction ins = ParseIns(state);
 }
 
 struct MemoryArgument ParseMemArg(struct AssemblyState *state)
@@ -136,7 +128,7 @@ struct MemoryArgument ParseMemArg(struct AssemblyState *state)
     }
     else if (isalpha(state->stream.token[0]))
     {
-        out.displacement = FindLabel(state->stream.token)->offset;
+        out.displacement = FindLabel(state)->offset;
     }
     else
     {
@@ -166,10 +158,22 @@ struct MemoryArgument ParseMemArg(struct AssemblyState *state)
         {
             NextToken(&state->stream);
             out.scale = NumberFromToken(state->stream.token);
-            NextToken(&state->stream); // ). dont bother arithmeticing this one that would be wacky
+            NextToken(&state->stream); // ). dont bother arithmeticing this one that would be wacky -- edit: maybe i will
             NextToken(&state->stream);
         }
     }
 
     return out;
+}
+
+bool IsMnemonic(struct AssemblyState *state)
+{
+    for (size_t i = 0; i != num_mnemonics; ++i)
+    {
+        if (!strcmp(state->stream.token, mnemonics[i].name))
+        {
+            return true;
+        }
+    }
+    return false;
 }
