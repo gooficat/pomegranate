@@ -7,25 +7,50 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "constexpr.h"
+#include "asm/constexpr.h"
 
 #include "mnems.h"
 #include "parse.h"
 
-bool MatchInstruction(struct Instruction *ins, struct Mnemonic *mnem)
+bool ArgMatch(struct Argument *argument, struct ArgProfile ins)
 {
-    if (strcmp(ins->mnemonic, mnem->name))
+    // switch ()
+    return false;
+}
+
+bool MatchOpcode(struct Instruction *ins, struct OpProfile *op)
+{
+    for (uint8_t i = 0; i != MAX_ARGS; ++i)
     {
-        return false;
+        if (!ArgMatch(&ins->arguments[i], op->profile[i]))
+        {
+            return false;
+        }
     }
+
     return true;
+}
+
+struct OpProfile *FindOpProfile(struct Instruction *ins, struct Mnemonic *mnem)
+{
+    for (size_t i = mnem->offset; i != mnem->offset + mnem->num_variants; ++i)
+    {
+        if (MatchOpcode(ins, &instructions[i]))
+        {
+            return &instructions[i];
+        }
+    }
+
+    fprintf(stderr, "No opcode found for profile of instruction %s\n", ins->mnemonic);
+
+    exit(EXIT_FAILURE);
 }
 
 struct Mnemonic *FindMnemonic(struct Instruction *ins)
 {
-    for (size_t i = 0; i != num_mnemonics; ++i)
+    for (size_t i = 0; i != NUM_MNEMS; ++i)
     {
-        if (MatchInstruction(ins, &mnemonics[i]))
+        if (!strcmp(ins->mnemonic, mnemonics[i].name))
         {
             return &mnemonics[i];
         }
@@ -36,9 +61,7 @@ struct Mnemonic *FindMnemonic(struct Instruction *ins)
     exit(EXIT_FAILURE);
 }
 
-void EncodeInstruction(struct AssemblyState *state)
+void EncodeInstruction(struct Instruction instruction)
 {
-    struct Instruction ins = ParseIns(state);
-
-    struct Mnemonic *mnem = FindMnemonic(&ins);
+    struct OpProfile *prof = FindOpProfile(&instruction, FindMnemonic(&instruction));
 }

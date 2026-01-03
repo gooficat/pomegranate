@@ -34,7 +34,7 @@ struct Argument ParseArg(struct AssemblyState *state)
     return argument;
 }
 
-struct Instruction ParseIns(struct AssemblyState *state)
+struct Instruction ParseInstruction(struct AssemblyState *state)
 {
     struct Instruction instruction;
 
@@ -59,9 +59,9 @@ struct Instruction ParseIns(struct AssemblyState *state)
 
 bool IsMnemonic(struct AssemblyState *state)
 {
-    for (size_t i = 0; i != num_mnemonics; ++i)
+    for (size_t i = 0; i != NUM_MNEMS; ++i)
     {
-        if (!strcmp(state->stream.token, mnemonics[i].name))
+        if (!strcmp(state->stream.token, mnemonics[i]))
         {
             return true;
         }
@@ -69,13 +69,13 @@ bool IsMnemonic(struct AssemblyState *state)
     return false;
 }
 
-struct Register *FindRegister(const char *name)
+const char *FindRegister(const char *name)
 {
-    for (int8_t i = 0; i != num_registers; ++i)
+    for (int8_t i = 0; i != NUM_REGS; ++i)
     {
-        if (!strcmp(name, registers[i].name))
+        if (!strcmp(name, registers[i]))
         {
-            return &registers[i];
+            return registers[i];
         }
     }
     return NULL;

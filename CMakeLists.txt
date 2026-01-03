@@ -3,8 +3,15 @@ project(mylang)
 
 include_directories(${CMAKE_SOURCE_DIR}/src)
 
-file(GLOB_RECURSE srcs CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/src/*)
 
 add_executable(mylang
-    ${srcs}
+    src/main.c
+    src/tok.c
+    src/asm/asm.c
+    src/asm/constexpr.c
+
+    src/asm/platform/x86_64/encode.c
+    src/asm/platform/x86_64/mnems.c
+    src/asm/platform/x86_64/parse.c
+
 )

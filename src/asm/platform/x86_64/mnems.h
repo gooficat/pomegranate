@@ -4,27 +4,52 @@
 
 #define MAX_ARGS 3
 
-enum RegisterType
+#define BIT(n) (1 << (n))
+
+enum OpType
 {
-    REG_GENQ,
+    NO_OP,
+    DIR_ADDR,
+    DS_ERAX,
+    DS_ERBX_AL,
+    DS_ERDI,
+    CTRL_REG,
+    DBG_REG,
+    FPU_STI_MEM,
+    FPU_STI,
+    RFLAGS,
+    GEN_MODRM,
+
 };
 
-struct Register
+enum OpSize
 {
-    const char *name;
-    uint8_t code;
-    enum RegisterType type;
+    SZ_BYTE,
+};
+
+struct ArgProfile
+{
+    char type;
+    char size;
+};
+
+struct OpProfile
+{
+    struct ArgProfile profile[MAX_ARGS];
+    uint8_t opcode;
 };
 
 struct Mnemonic
 {
     const char *name;
-    uint8_t code;
+    uint32_t offset;
+    uint16_t num_variants;
 };
 
-extern struct Register registers[];
+#define NUM_REGS 16
+extern const char *registers[];
 
-extern uint8_t num_registers;
+extern struct OpProfile instructions[];
 
-extern struct Mnemonic mnemonics[];
-extern size_t num_mnemonics;
+#define NUM_MNEMS 2
+extern struct Mnemonic mnemonics[2];

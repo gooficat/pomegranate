@@ -23,7 +23,7 @@ void HandleDirective(struct AssemblyState *state)
 
 void HandleInstruction(struct AssemblyState *state)
 {
-    EncodeInstruction(state);
+    EncodeInstruction(ParseInstruction(state));
 }
 
 void HandleAlpha(struct AssemblyState *state)
@@ -105,5 +105,7 @@ void Assemble(const char *input_file_path, const char *output_file_path)
     } while (!state.labels_match);
 
     SetStream(&state.stream);
+
+    fopen_s(&state.out, output_file_path, "wb+");
     Encode(&state, true);
 }

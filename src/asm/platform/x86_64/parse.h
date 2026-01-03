@@ -21,8 +21,8 @@ enum ArgumentType
 
 struct MemoryArgument
 {
-    struct Register *base;
-    struct Register *index;
+    const char *base;
+    const char *index;
     uint8_t scale;
     int64_t displacement;
 };
@@ -31,7 +31,7 @@ struct Argument
     enum ArgumentType type;
     union
     {
-        struct Register *reg;
+        const char *reg;
         struct MemoryArgument mem;
         uint64_t imm;
         // to be honest, i could just settle for having the memory argument structure
@@ -51,11 +51,11 @@ struct Instruction
     uint8_t num_args;
 };
 
-struct Instruction ParseIns(struct AssemblyState *state);
+struct Instruction ParseInstruction(struct AssemblyState *state);
 struct Argument ParseArg(struct AssemblyState *state);
 
 struct MemoryArgument ParseMemArg(struct AssemblyState *state);
 bool IsMnemonic(struct AssemblyState *state);
 
 bool IsMnemonic(struct AssemblyState *state);
-struct Register *FindRegister(const char *name);
+const char *FindRegister(const char *name);
