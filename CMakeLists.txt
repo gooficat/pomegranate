@@ -10,8 +10,9 @@ add_executable(mylang
     src/asm/asm.c
     src/asm/constexpr.c
 
-    src/asm/platform/x86_64/encode.c
+    src/asm/platform/x86_64/match.c
     src/asm/platform/x86_64/mnems.c
     src/asm/platform/x86_64/parse.c
+    src/asm/platform/x86_64/encode.c
 
 )
