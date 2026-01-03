@@ -3,5 +3,5 @@
 .section ".text"
 
 _start:
-    mov $12, %rax
+    mov $50+302, %rax
     ret

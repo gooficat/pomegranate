@@ -13,6 +13,11 @@ void WriteByte(struct AssemblyState *state, uint8_t byte, bool do_write)
     }
 }
 
+void DirectivePutBytes(struct AssemblyState *state, uint8_t byte_size) // this is reused for byte, word, dword, qword
+{
+    // uint64_t value
+}
+
 void HandleDirective(struct AssemblyState *state)
 {
     NextToken(&state->stream); // .

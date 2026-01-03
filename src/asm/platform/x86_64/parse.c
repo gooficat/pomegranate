@@ -15,19 +15,21 @@ struct Argument ParseArg(struct AssemblyState *state)
         argument.type = ASM_ARG_REG;
         NextToken(&state->stream);
         argument.reg = FindRegister(state->stream.token);
+        NextToken(&state->stream);
     }
     else if (state->stream.token[0] == '$')
     {
         argument.type = ASM_ARG_IMM;
         NextToken(&state->stream);
-        argument.imm = EvalConst(state);
+        argument.imm = UCompTimeArith(state);
+        debug_print("Immediate argument with value of %llu\n", argument.imm);
     }
     else
     {
         argument.type = ASM_ARG_MEM;
         argument.mem = ParseMemArg(state); // this is frighteningly complicated so ill defer it
+        NextToken(&state->stream);
     }
-    NextToken(&state->stream);
 
     // debug_print();
 
@@ -120,10 +122,10 @@ struct MemoryArgument ParseMemArg(struct AssemblyState *state)
         if (state->stream.token[0] != ')')
         {
             NextToken(&state->stream);
-            out.scale = EvalConst(state);
+            out.scale = UCompTimeArith(state);
             NextToken(&state->stream); // ). dont bother arithmeticing this one that would be wacky -- edit: maybe i will
         }
     }
-
+    debug_print("Memory argument. base %s, index %s, scale %hhu, displacement %llu\n", out.base, out.index, out.scale, out.displacement);
     return out;
 }
